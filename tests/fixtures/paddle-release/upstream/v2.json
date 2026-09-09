@@ -1,0 +1,422 @@
+{
+  "Subscription": {
+    "type": "object",
+    "required": [
+      "id",
+      "status",
+      "customer_id",
+      "address_id",
+      "business_id",
+      "currency_code",
+      "created_at",
+      "updated_at",
+      "started_at",
+      "first_billed_at",
+      "next_billed_at",
+      "paused_at",
+      "canceled_at",
+      "discount",
+      "collection_mode",
+      "billing_details",
+      "current_billing_period",
+      "billing_cycle",
+      "scheduled_change",
+      "management_urls",
+      "items",
+      "custom_data",
+      "import_meta",
+      "consent_requirements"
+    ],
+    "properties": {
+      "id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriptionId"
+          }
+        ],
+        "x-external-readOnly": true
+      },
+      "status": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StatusSubscription"
+          }
+        ],
+        "x-external-readOnly": true
+      },
+      "customer_id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomerId"
+          }
+        ],
+        "description": "Paddle ID of the customer that this subscription is for, prefixed with `ctm_`."
+      },
+      "address_id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AddressId"
+          }
+        ],
+        "description": "Paddle ID of the address that this subscription is for, prefixed with `add_`."
+      },
+      "business_id": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/BusinessId"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Paddle ID of the business that this subscription is for, prefixed with `biz_`."
+      },
+      "currency_code": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CurrencyCode"
+          }
+        ],
+        "description": "Supported three-letter ISO 4217 currency code. Transactions for this subscription are created in this currency. Must be `USD`, `EUR`, or `GBP` if `collection_mode` is `manual`."
+      },
+      "created_at": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreatedAt"
+          }
+        ],
+        "readOnly": true
+      },
+      "updated_at": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UpdatedAt"
+          }
+        ],
+        "readOnly": true
+      },
+      "started_at": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "RFC 3339 datetime string of when this subscription started. This may be different from `first_billed_at` if the subscription started in trial.",
+        "readOnly": true
+      },
+      "first_billed_at": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "RFC 3339 datetime string of when this subscription was first billed. This may be different from `started_at` if the subscription started in trial.",
+        "readOnly": true
+      },
+      "next_billed_at": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "RFC 3339 datetime string of when this subscription is next scheduled to be billed."
+      },
+      "paused_at": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "RFC 3339 datetime string of when this subscription was paused. Set automatically by Paddle when the pause subscription operation is used. `null` if not paused.",
+        "readOnly": true
+      },
+      "canceled_at": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "RFC 3339 datetime string of when this subscription was canceled. Set automatically by Paddle when the cancel subscription operation is used. `null` if not canceled.",
+        "readOnly": true
+      },
+      "discount": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/SubscriptionDiscount"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Details of the discount applied to this subscription."
+      },
+      "collection_mode": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CollectionMode"
+          }
+        ],
+        "description": "How payment is collected for transactions created for this subscription. `automatic` for checkout, `manual` for invoices.",
+        "default": "automatic"
+      },
+      "billing_details": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/BillingDetails"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Details for invoicing. Required if `collection_mode` is `manual`."
+      },
+      "current_billing_period": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/TimePeriod"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Current billing period for this subscription. Set automatically by Paddle based on the billing cycle. `null` for `paused` and `canceled` subscriptions.",
+        "readOnly": true
+      },
+      "billing_cycle": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Duration"
+          }
+        ],
+        "description": "How often this subscription renews. Set automatically by Paddle based on the prices on this subscription.",
+        "readOnly": true
+      },
+      "scheduled_change": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/SubscriptionScheduledChange"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Change that's scheduled to be applied to a subscription. Use the pause subscription, cancel subscription, and resume subscription operations to create scheduled changes. `null` if no scheduled changes."
+      },
+      "management_urls": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubscriptionManagementUrls"
+          }
+        ],
+        "readOnly": true
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ItemSubscription"
+        },
+        "minItems": 1,
+        "maxItems": 100,
+        "description": "List of items on this subscription. Only recurring items are returned.",
+        "readOnly": true
+      },
+      "custom_data": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/CustomData"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Your own structured key-value data."
+      },
+      "import_meta": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ImportMetaSubscription"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Import information for this entity. `null` if this entity is not imported.",
+        "x-external-readOnly": true
+      },
+      "consent_requirements": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/SubscriptionConsentRequirement"
+        },
+        "description": "List of active consent requirements for the subscription's current billing period."
+      }
+    },
+    "description": "Represents a subscription entity.",
+    "title": "Subscription"
+  },
+  "CurrencyCode": {
+    "type": "string",
+    "enum": [
+      "USD",
+      "EUR",
+      "GBP",
+      "JPY",
+      "AUD",
+      "CAD",
+      "CHF",
+      "HKD",
+      "SGD",
+      "SEK",
+      "ARS",
+      "BRL",
+      "CLP",
+      "CNY",
+      "COP",
+      "CZK",
+      "DKK",
+      "HUF",
+      "ILS",
+      "INR",
+      "KRW",
+      "MXN",
+      "NOK",
+      "NZD",
+      "PEN",
+      "PLN",
+      "RUB",
+      "THB",
+      "TRY",
+      "TWD",
+      "UAH",
+      "VND",
+      "ZAR"
+    ],
+    "description": "Supported three-letter ISO 4217 currency code.",
+    "title": "Currency code",
+    "x-enum-descriptions": {
+      "USD": {
+        "description": "United States Dollar"
+      },
+      "EUR": {
+        "description": "Euro"
+      },
+      "GBP": {
+        "description": "Pound Sterling"
+      },
+      "JPY": {
+        "description": "Japanese Yen"
+      },
+      "AUD": {
+        "description": "Australian Dollar"
+      },
+      "CAD": {
+        "description": "Canadian Dollar"
+      },
+      "CHF": {
+        "description": "Swiss Franc"
+      },
+      "HKD": {
+        "description": "Hong Kong Dollar"
+      },
+      "SGD": {
+        "description": "Singapore Dollar"
+      },
+      "SEK": {
+        "description": "Swedish Krona"
+      },
+      "ARS": {
+        "description": "Argentine Peso"
+      },
+      "BRL": {
+        "description": "Brazilian Real"
+      },
+      "CLP": {
+        "description": "Chilean Peso"
+      },
+      "CNY": {
+        "description": "Chinese Yuan"
+      },
+      "COP": {
+        "description": "Colombian Peso"
+      },
+      "CZK": {
+        "description": "Czech Koruna"
+      },
+      "DKK": {
+        "description": "Danish Krone"
+      },
+      "HUF": {
+        "description": "Hungarian Forint"
+      },
+      "ILS": {
+        "description": "Israeli Shekel"
+      },
+      "INR": {
+        "description": "Indian Rupee"
+      },
+      "KRW": {
+        "description": "South Korean Won"
+      },
+      "MXN": {
+        "description": "Mexican Peso"
+      },
+      "NOK": {
+        "description": "Norwegian Krone"
+      },
+      "NZD": {
+        "description": "New Zealand Dollar"
+      },
+      "PEN": {
+        "description": "Peruvian Sol"
+      },
+      "PLN": {
+        "description": "Polish Zloty"
+      },
+      "RUB": {
+        "description": "Russian Ruble"
+      },
+      "THB": {
+        "description": "Thai Baht"
+      },
+      "TRY": {
+        "description": "Turkish Lira"
+      },
+      "TWD": {
+        "description": "New Taiwan Dollar"
+      },
+      "UAH": {
+        "description": "Ukrainian Hryvnia"
+      },
+      "VND": {
+        "description": "Vietnamese Dong"
+      },
+      "ZAR": {
+        "description": "South African Rand"
+      }
+    }
+  },
+  "SubscriptionId": {
+    "type": "string",
+    "pattern": "^sub_[a-z\\d]{26}$",
+    "description": "Unique Paddle ID for this subscription entity, prefixed with `sub_`.",
+    "title": "Subscription ID",
+    "examples": [
+      "sub_01h04vsc0qhwtsbsxh3422wjs4"
+    ]
+  }
+}

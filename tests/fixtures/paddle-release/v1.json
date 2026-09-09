@@ -1,0 +1,104 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Paddle subscription currency projection",
+    "version": "v1"
+  },
+  "paths": {
+    "/subscriptions/{subscription_id}": {
+      "get": {
+        "operationId": "getSubscription",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription projection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Subscription"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Subscription": {
+        "type": "object",
+        "required": [
+          "id",
+          "currency_code"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^sub_[a-z\\d]{26}$",
+            "description": "Unique Paddle ID for this subscription entity, prefixed with `sub_`.",
+            "title": "Subscription ID",
+            "examples": [
+              "sub_01h04vsc0qhwtsbsxh3422wjs4"
+            ]
+          },
+          "currency_code": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "EUR",
+              "GBP",
+              "JPY",
+              "AUD",
+              "CAD",
+              "CHF",
+              "HKD",
+              "SGD",
+              "SEK",
+              "ARS",
+              "BRL",
+              "CNY",
+              "COP",
+              "CZK",
+              "DKK",
+              "HUF",
+              "ILS",
+              "INR",
+              "KRW",
+              "MXN",
+              "NOK",
+              "NZD",
+              "PLN",
+              "RUB",
+              "THB",
+              "TRY",
+              "TWD",
+              "UAH",
+              "VND",
+              "ZAR"
+            ],
+            "description": "Supported three-letter ISO 4217 currency code. Transactions for this subscription are created in this currency. Must be `USD`, `EUR`, or `GBP` if `collection_mode` is `manual`.",
+            "title": "Currency code"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "provider": "Paddle",
+  "change": "CLP and PEN currencies, released March 4 2026",
+  "changelog": "https://developer.paddle.com/changelog/2026/clp-pen-currencies/",
+  "sources": [
+    {
+      "revision": "before",
+      "commit": "aa62eb37864619316b5e33f4abc5b35bb9b52071",
+      "snapshotDate": "2026-02-02",
+      "url": "https://raw.githubusercontent.com/PaddleHQ/paddle-openapi/aa62eb37864619316b5e33f4abc5b35bb9b52071/v1/openapi.yaml",
+      "sha256": "9ba8be0f2006bd16dc25f9e9268e4e496ffcf2d86a0ee7e0959c5382a04c424c"
+    },
+    {
+      "revision": "after",
+      "commit": "540ea17369325ff866b65ecf6c5105592f16fb5d",
+      "snapshotDate": "2026-07-09",
+      "url": "https://raw.githubusercontent.com/PaddleHQ/paddle-openapi/540ea17369325ff866b65ecf6c5105592f16fb5d/v1/openapi.yaml",
+      "sha256": "e1ac347eb3c5ff208fdbd6af9c4b3f7e9e4e9212be881468ee4f97792058734b"
+    }
+  ],
+  "generator": "orval@8.30.0",
+  "scope": "Two-field Subscription projection from published snapshots; scalar references resolved and enum documentation extension omitted. Transport response projection authored for the fixture. Generated client/models are unedited generator output.",
+  "files": {
+    "ORVAL-LICENSE": "a8e153aafa1d73e70356ffaed4b1699a324c022b4ac4be9c3bdc385c96d52a20",
+    "generator-lock.json": "97b916f2846c133302d01a3cf28e6c4f35dc530e25afce65908f4719abee3fe2",
+    "generator-package.json": "ef1aaf7f2307a8bf9c271545d2bb052c3123d89d42f6969f5a4a51442effc47e",
+    "orval.config.mjs": "f2a6add1661224e2ce935a01ee92536265634df63af1c12bf28689f848b05270",
+    "project/bindings.json": "d7560cf9ae5a5966fce8c6c2de980679dc99c788474c9798d24121b5654483f1",
+    "project/consumer.ts": "d353d7951648d6c5bc6e2d86f5b7ec7c4597e6acb10972f7ee805ed7a5064682",
+    "project/generated/client.ts": "5eff8efd0009328b6084025bb64bc308c93d92e1d97d5ee98029b9b2f1818cc4",
+    "project/generated/models/getSubscription200.ts": "9982df50ed25b1089f7f02ad758d72bc4656e5529366c22b4ba2186fd1ff87a1",
+    "project/generated/models/subscription.ts": "65287466c12fe0ace85869644f6548b4e8746a4630b8ea58a3c03eadc0b3d899",
+    "project/generated/models/subscriptionCurrencyCode.ts": "938b90640747ea577c7bf6ba010bb9d29082ed5a2c5a8a449bf56df32a388a59",
+    "project/package.json": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae",
+    "project/tsconfig.json": "37bd9db66fc42e05afec014dbd9198930c6aa2bcd3e9bb36f5124bca80e40eb0",
+    "upstream/LICENSE": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+    "upstream/v1.json": "2f5373b112f978588e99340057d22fb4dbc05c89ab764dcf57d48926cc097e45",
+    "upstream/v2.json": "d96c871e5f7ae5b244aec97acbab289e183ca80b7414200dd1831219df3757be",
+    "v1.json": "32aee51223f7dc3d42f84cf7300ba19e47683a1561da3bd4f3d4a3e38fa082d1",
+    "v2.json": "1e68fdaba160734fca1710088b9c9d2efdf6a8e2f26e535a1ae30779a4383ee3",
+    "blocked-consumer.ts": "b3207955daa018923793e0f9865c80aa0b950fb53cf25346706137fdadec916b",
+    "project-spec.mjs": "bbc8c857d2809e5e3d62fd32aedb03d15df37c08ac26c4747b2790a651e8ef61"
+  }
+}
