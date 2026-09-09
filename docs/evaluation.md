@@ -63,3 +63,13 @@ their selection criteria and denominator separately from this curated corpus.
 Provider integration is a separate opt-in smoke test described in
 `docs/submission.md`. A stubbed HTTP test establishes request isolation and the
 compiler gate; it does not establish live model behavior.
+
+## Independently generated SDK
+
+`npm run test:integration` covers **1 pinned Orval v8.30.0 scenario** separately
+from the 18-case authored corpus. It migrates a generated operation through CLI
+preview and verified persistence, then checks actual loopback HTTP observations
+before and after. The generated SDK, adapter and models remain exact upstream
+copies in the repository; only a temporary target is patched. Provenance and
+limits are in `tests/fixtures/orval/README.md`. The API rename target is synthetic;
+the SDK itself is independently generated. No provider request occurs.

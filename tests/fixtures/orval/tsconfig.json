@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["consumer.ts", "barrel.ts", "environment.d.ts", "upstream/app/gen/**/*.ts", "upstream/custom-fetch.ts"]
+}

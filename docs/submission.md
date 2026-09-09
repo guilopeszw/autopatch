@@ -7,6 +7,7 @@ npm run typecheck
 npm test
 npm run demo
 npm run evaluate
+npm run test:integration
 ```
 
 The demo is a preview: two schema changes, two changed files, zero compiler
@@ -19,6 +20,11 @@ rejections. It checks literal runtime observations as well as compiler diagnosti
 For structured output, use `npm run evaluate -- --json`. The denominator and
 limitations are in [evaluation.md](evaluation.md); do not present 18 passing
 expectations as 18 completed migrations or claim 90% production coverage.
+
+The integration command is separate evidence: it exercises the pinned Orval
+v8.30.0 generated SDK through a temporary on-disk CLI migration and real loopback
+HTTP requests. Its one operation-rename scenario passes with preserved request
+and response observations. The fixture README records provenance and limits.
 
 ## Code to inspect
 
