@@ -104,3 +104,23 @@ test('refuses altered staged files before publishing a branch', async () => {
   expect(f.git('rev-parse', 'HEAD').trim()).toBe(f.head);
   expect(f.git('ls-remote', '--heads', 'origin').trim().split('\n')).toHaveLength(1);
 });
+
+test('recovers an orphan draft branch after unrelated changes land on the default branch', async () => {
+  const f = fixture();
+  const failCreate: typeof fetch = (input, options) => options?.method === 'POST' && new URL(String(input)).pathname.endsWith('/pulls')
+    ? Promise.resolve(new Response('temporary failure', { status: 503 })) : f.fetcher(input, options);
+  expect(await f.run(failCreate)).toBe(2);
+  const branch = f.git('branch', '--show-current').trim();
+  const pushed = f.git('rev-parse', 'HEAD').trim();
+  f.git('switch', 'main');
+  writeFileSync(join(f.root, 'README.md'), 'An unrelated application update.\n');
+  f.git('add', '.'); f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'docs: update application guide');
+  f.git('push', 'origin', 'main');
+  const newHead = f.git('rev-parse', 'HEAD').trim();
+  writeFileSync(join(f.root, 'api.ts'), 'export const version = 2;\n'); f.git('add', 'api.ts');
+  writeFileSync(join(f.output, 'manifest.json'), JSON.stringify({ ...f.manifest, head: newHead }));
+  expect(await f.run()).toBe(0);
+  expect(f.pulls).toHaveLength(1);
+  expect(f.git('ls-remote', '--heads', 'origin', branch)).toContain(pushed);
+  expect(f.git('rev-parse', 'HEAD').trim()).toBe(newHead);
+});

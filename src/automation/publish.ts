@@ -94,9 +94,18 @@ export async function runPublishCli(args: readonly string[], output: Output = { 
     const prior = await existing();
     if (prior) { await notify("ready", prior); output.out(`Existing migration: ${prior}\n`); return 0; }
     const current = git("rev-parse", "HEAD").trim();
-    const validateCommit = (commit: string): void => {
+    const validateCommit = (commit: string, allowOlderBase = false): void => {
       const parents = git("rev-list", "--parents", "-n", "1", commit).trim().split(" ");
-      if (parents.length !== 2 || parents[1] !== manifest.head || digest(git("diff", "--binary", "--full-index", `${commit}^`, commit)) !== manifest.patchSha256) throw new Error("Existing branch differs from the verified patch; review it manually");
+      if (parents.length !== 2 || (!allowOlderBase && parents[1] !== manifest.head) || digest(git("diff", "--binary", "--full-index", `${commit}^`, commit)) !== manifest.patchSha256) throw new Error("Existing branch differs from the verified patch; review it manually");
+      if (parents[1] !== manifest.head) {
+        // An interrupted publication may predate unrelated default-branch work.
+        // Accept only the same patch whose merge produces exactly the tree that
+        // this run verified. Never rebase or overwrite the remote review branch.
+        if (git("rev-parse", "--is-shallow-repository").trim() === "true") git("fetch", "--unshallow", "origin");
+        git("merge-base", "--is-ancestor", parents[1]!, String(manifest.head));
+        const mergedTree = git("merge-tree", "--write-tree", String(manifest.head), commit).trim().split("\n")[0];
+        if (mergedTree !== git("write-tree").trim()) throw new Error("Existing branch no longer merges to the verified tree; review it manually");
+      }
     };
     if (current === manifest.head) {
       const staged = git("diff", "--cached", "--name-only", "-z").split("\0").filter(Boolean).sort();
@@ -108,7 +117,7 @@ export async function runPublishCli(args: readonly string[], output: Output = { 
     }
     if (git("ls-remote", "--heads", "origin", `refs/heads/${branch}`).trim()) {
       git("fetch", "--no-tags", "origin", `refs/heads/${branch}`);
-      validateCommit(git("rev-parse", "FETCH_HEAD").trim());
+      validateCommit(git("rev-parse", "FETCH_HEAD").trim(), true);
     } else {
       if (current === manifest.head) {
         git("switch", "-c", branch);
