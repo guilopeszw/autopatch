@@ -33,3 +33,31 @@ reported separately. The offline corpus installs no provider. Live validation
 is pending configuration and is not implied by the stubbed HTTP test.
 
 Standards: 1 finding, worst P1, fixed. Spec: 2 findings, worst P1, both fixed.
+
+## Fresh review of the final PR head
+
+Pinned head: `84ae148db43e3a581bdbdab0c2df34e86e965eaa`.
+Base: `fc8e96167cd6e098281253b8373ddc5fac67f0cc`.
+Command: `git diff fc8e96167cd6e098281253b8373ddc5fac67f0cc...84ae148db43e3a581bdbdab0c2df34e86e965eaa`.
+Two independent reviewers used AGENTS.md, README.md, the mission and PR scope.
+The findings above were already resolved at this pinned head.
+
+### Standards
+
+No new documented-rule breaches or actionable Fowler smells found.
+
+### Spec
+
+**P1 — Nullable enum lowering admitted a forbidden configured null.** The PR
+promises to check configured values against the destination contract. With
+`type: string`, `nullable: true`, `enum: ["eu", "us"]` and a configured null, the
+planner returned a verified patch because enum lowering appended null. In
+[OpenAPI 3.0.3](https://spec.openapis.org/oas/v3.0.3.html#fixed-fields-20), nullable
+widens the scalar type while other constraints still apply. Enum can exclude null.
+
+Fixed at the shared schema-to-type boundary: enum output contains exactly its
+validated enumerated values. A failing rejection regression now passes; a paired
+runtime fixture verifies that explicitly enumerated null still migrates correctly.
+Both use the same public migration runner and in-memory compiler as the CLI.
+
+Fresh review: Standards 0 findings. Spec 1 finding, worst P1, fixed.

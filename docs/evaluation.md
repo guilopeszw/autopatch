@@ -4,9 +4,9 @@ Run `npm run evaluate` for the readable report or `npm run evaluate -- --json`
 for per-case results and literal runtime observations. Exit 1 means an expectation
 failed. No provider is configured on this path, and CI runs it without API keys.
 
-The initial corpus contains **15 curated cases: 8 completed migrations, 7 expected
-rejections, 15 passing expectations, and 0 LLM requests**. The completed-migration
-fraction is **8/15 (53.3%)** across this deliberately mixed acceptance/rejection
+The corpus contains **17 curated cases: 9 completed migrations, 8 expected
+rejections, 17 passing expectations, and 0 LLM requests**. The completed-migration
+fraction is **9/17 (52.9%)** across this deliberately mixed acceptance/rejection
 set. Safe rejection counts toward correctness, never toward migration coverage.
 These small, repository-authored examples do not establish the mission's 90%
 production coverage target or represent a sampled population of real projects.
@@ -21,6 +21,7 @@ production coverage target or represent a sampled population of real projects.
 | Scalar enum widened | Complete | `active` preserved |
 | Required field with a configured value | Complete | Serialized request gains `region: "eu"` |
 | Multiple configured required fields | Complete | Serialized request gains `region` and `zone` |
+| Nullable enum explicitly includes null | Complete | Serialized request gains `region: null` |
 | Required field without a business value | Reject | Compiler errors; no patch |
 | Incompatible property type | Reject | Compiler errors; no patch |
 | Inferred optional producer from PR #1 review | Reject | Structural rename cannot be proven |
@@ -28,6 +29,7 @@ production coverage target or represent a sampled population of real projects.
 | Invalid configured enum value | Reject | Value fails the destination type |
 | Dynamic computed property | Reject | An inserted default could overwrite a supplied value |
 | Fractional default for an integer field | Reject | Known value violates the integer constraint |
+| Nullable enum excludes null | Reject | Null violates the enum despite scalar nullability |
 
 ## What is checked
 

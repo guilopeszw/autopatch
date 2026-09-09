@@ -29,6 +29,27 @@ const bindings = { operations: { submit: { file: '/sdk.ts', export: 'submit' } }
 const sdk = 'export interface Input { id: string; name?: string } export function submit(input: Input) { const { name: label } = input; return label ?? "missing"; }';
 const typedConsumer = 'import { submit, type Input } from "./sdk.js"; const name = "Ada"; const input: Input = { id: "1", name }; export const result = submit(input);';
 
+const nullableEnumCase: EvaluationCase = {
+  id: 'nullable-enum-excludes-null',
+  description: 'Reject null when nullable widens the scalar type but enum still excludes null.',
+  before: { ...objectDoc({ id: { type: 'string' } }), openapi: '3.0.3' },
+  after: { ...objectDoc({ id: { type: 'string' }, region: { type: 'string', nullable: true, enum: ['eu', 'us'] } }, ['id', 'region']), openapi: '3.0.3' },
+  files: {
+    '/sdk.ts': 'export interface Input { id: string } export function submit(input: Input) { return JSON.stringify(input); }',
+    '/consumer.ts': 'import { submit } from "./sdk.js"; export const result = submit({ id: "1" });',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: null } } } },
+  expected: { status: 'blocked', reason: 'Configured default for region does not satisfy' },
+};
+corpus.push(nullableEnumCase);
+corpus.push({
+  ...nullableEnumCase,
+  id: 'nullable-enum-includes-null',
+  description: 'Accept a configured null when both the scalar type and enum permit it.',
+  after: { ...objectDoc({ id: { type: 'string' }, region: { type: 'string', nullable: true, enum: ['eu', 'us', null] } }, ['id', 'region']), openapi: '3.0.3' },
+  expected: { status: 'verified', before: '{"id":"1"}', after: '{"id":"1","region":null}' },
+});
+
 corpus.push(
   {
     id: 'optional-property-and-destructuring', description: 'Preserve an optional value, local shorthand and destructured binding.',

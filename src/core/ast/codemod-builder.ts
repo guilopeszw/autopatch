@@ -114,7 +114,9 @@ function schemaType(schema: Record<string, unknown>): string {
           (types.includes("number") || (types.includes("integer") && Number.isInteger(value)))))) {
       throw new Error("Enum values must match the declared scalar type");
     }
-    return [...new Set([...schema.enum.map((value: unknown) => JSON.stringify(value)), ...(schema.nullable ? ["null"] : [])])].join(" | ");
+    // Nullable widens the scalar type, but enum remains an independent constraint.
+    // Null is legal here only when it is explicitly present in the enum.
+    return [...new Set(schema.enum.map((value: unknown) => JSON.stringify(value)))].join(" | ");
   }
   return [...new Set([...output, ...(schema.nullable ? ["null"] : [])])].join(" | ");
 }
