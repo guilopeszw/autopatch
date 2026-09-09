@@ -38,3 +38,12 @@ test.each(['0', 'submit({ count: "3" } as any)', 'submit({ count: "3" } as never
   expect(result.success).toBe(false);
   expect(source.getFullText()).toBe(original);
 });
+
+test('rejects inferred any and never values that would evade the compiler without an explicit cast', async () => {
+  const { project, source, call } = setup();
+  const original = source.getFullText();
+  const result = await repairCallSites(project, [call], changes,
+    async () => 'submit({ count: JSON.parse("3") })', { maxAttempts: 1 });
+  expect(result.success).toBe(false);
+  expect(source.getFullText()).toBe(original);
+});

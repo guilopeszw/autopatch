@@ -45,11 +45,20 @@ export async function repairCallSites(
       }
       // Work backwards so a later edit cannot shift an earlier node's offsets.
       replacements.sort((a, b) => b.start - a.start);
+      const patchedCalls: CallExpression[] = [];
       for (const target of replacements) {
         const call = target.source.getDescendantsOfKind(ts.SyntaxKind.CallExpression)
           .find((node) => node.getStart() === target.start && node.getEnd() === target.end);
         if (!call) throw new Error("Repair target became stale or overlaps another target");
-        call.replaceWithText(target.replacement);
+        const patched = call.replaceWithText(target.replacement);
+        if (!Node.isCallExpression(patched)) throw new Error("Repair did not produce a call expression");
+        patchedCalls.push(patched);
+      }
+      for (const call of patchedCalls) {
+        if ([call, ...call.getDescendants()].some((node) => Node.isExpression(node) &&
+            (node.getType().isAny() || node.getType().isNever()))) {
+          throw new Error("LLM repair contains inferred any or never and cannot be verified safely");
+        }
       }
       const validation = checkProject(project);
       result.diagnostics = validation.errors;
