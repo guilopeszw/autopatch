@@ -137,6 +137,12 @@ recovery, retained diagnostics, provider retries, publication retries after base
 advancement, and notice deduplication through the public monitor/publisher CLIs.
 The [monitoring guide](monitoring.md) describes scope and operational limits.
 
-An [independent application baseline check](adoption-check.md) also records a
-blocked Next.js SaaS Starter attempt, including compiler/dependency differences.
-It is excluded from completed-migration counts.
+## Independent subscription application
+
+`npm run test:adoption` adds one opt-in Next.js SaaS Starter scenario: a local
+helper rename, whole-project compiler validation, and before/after observations
+from the actual helper and Stripe SDK over loopback HTTPS. The target rename is
+authored. Manual preparation requires a pinned Drizzle release candidate; database
+and checkout behavior are not covered. The original unmodified application was
+blocked. [The adoption record](adoption-check.md) documents both attempts and
+machine timings. Neither attempt changes the 18-case corpus statistics.
