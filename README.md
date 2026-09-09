@@ -18,6 +18,7 @@ npm ci
 npm run typecheck   # native compiler diagnostics in memory; no shell tsc
 npm test           # real AST projects, filesystem transactions, and CLI tests
 npm run demo       # verified preview against the included fixture; no writes
+npm run evaluate   # offline corpus: runtime observations and expected rejections
 ```
 
 The demo migrates `createUser` → `registerUser` and `CreateUser.name` →
@@ -238,10 +239,11 @@ changes in a pull request after running the target application's tests.
 | `src/core/runner/migration.ts` | Baseline check, orchestration, rollback, reviewable plan |
 | `src/core/runner/patch-writer.ts` | Fresh validation, stale-plan checks and guarded persistence |
 | `tests/fixtures/` | OpenAPI v1/v2 documents and a runnable target SDK/consumer |
+| `src/evaluation/corpus.ts`, `scripts/evaluate.ts` | Trusted fixture evaluation with independent runtime expectations |
 
 Tests exercise confirmed public boundaries with real AST projects. External HTTP
 and targeted filesystem failures are the only mocked boundaries. CI runs the
-in-memory compiler check, test suite and fixture preview on Node 24. Keep commits
+in-memory compiler check, test suite, fixture preview and offline corpus on Node 24. Keep commits
 focused and Conventional; deliver changes through pull requests.
 
 Primary references: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html),
@@ -253,3 +255,7 @@ and [Anthropic Messages](https://platform.claude.com/docs/en/api/http/messages/c
 
 The independent two-axis [PR #1 review](docs/reviews/pr-1.md) records findings,
 reproductions and their resolutions.
+
+See the [evaluation protocol](docs/evaluation.md) for the measured denominator,
+case matrix and limitations, and the [submission walkthrough](docs/submission.md)
+for a short demonstration and opt-in provider check.

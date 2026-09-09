@@ -12,6 +12,7 @@
     "test": "vitest run --testTimeout=15000",
     "test:watch": "vitest --testTimeout=15000",
     "typecheck": "tsx scripts/typecheck.ts",
+    "evaluate": "tsx scripts/evaluate.ts",
     "demo": "tsx bin/autopatch.ts --from tests/fixtures/openapi-v1.json --to tests/fixtures/openapi-v2.json --project tests/fixtures/target/tsconfig.json --bindings tests/fixtures/target/bindings.json"
   },
   "dependencies": {
