@@ -45,13 +45,15 @@ edits, and compiler findings. No server or account is needed.
   interface property additions, removals, type changes, and requiredness changes.
 - **Verification:** both the original and patched project must pass strict native
   TypeScript diagnostics. Unsupported changes or unresolved errors block the patch.
-- **Delivery:** JSON/HTML review reports, optional verified writes, and a GitHub
-  workflow that opens draft migration PRs from checked-in schema updates.
+- **Automation:** scheduled provider polling, configured application checks, draft
+  migration PRs, and GitHub notices when a change needs attention.
+- **Review:** JSON/HTML reports and optional verified writes. Human approval
+  remains required before merging.
 - **Optional AI:** bounded repair of affected call expressions, with only the
   expression and schema diff as context. Disabled by default.
 
-AutoPatch does not poll providers, upgrade whole SDKs, process payments, choose
-billing policy, or merge/deploy changes. **Compilation proves type consistency,
+AutoPatch does not upgrade whole SDKs, process payments, choose billing policy,
+or merge/deploy changes. **Compilation proves type consistency,
 not business correctness.** Run your application's tests and review the patch.
 
 ## Documentation
@@ -60,7 +62,8 @@ not business correctness.** Run your application's tests and review the patch.
 | --- | --- |
 | Use your own project; check supported schemas, flags, and recovery | [CLI guide](docs/usage.md) |
 | Review a patch in the browser | [HTML reports](docs/review-report.md) |
-| Create migration PRs in GitHub Actions | [Workflow setup](docs/schema-migration-workflow.md) |
+| Monitor providers and propose checked draft PRs | [Monitoring setup](docs/monitoring.md) |
+| Propose patches from checked-in schema updates | [Migration workflow](docs/schema-migration-workflow.md) |
 | See exact provider coverage | [Examples](examples/README.md) |
 | Inspect test results, historical cases, and limitations | [Test evidence](docs/evaluation.md) |
 | Understand or contribute to the implementation | [Architecture](docs/architecture.md) |

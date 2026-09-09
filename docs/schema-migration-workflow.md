@@ -3,6 +3,7 @@
 When a checked-in target schema changes, the workflow runs AutoPatch and opens a
 **draft PR** containing verified source edits, an updated schema baseline, and
 review evidence. Blocked migrations produce findings without a source commit.
+For automatic upstream polling and application checks, use [scheduled monitoring](monitoring.md).
 
 ## Setup and inputs
 
@@ -26,7 +27,7 @@ node --import tsx scripts/prepare-migration-pr.ts --config examples/paddle/autop
 
 The output directory must be new, its parent must exist, and it must be outside
 the repository. Inputs must be tracked files with no symlinks. The command uses
-the actual CLI to plan and export `review.html` and `result.json`, then checks
+the shared typed file planner to plan and export `review.html` and `result.json`, then checks
 that each proposed source edit is tracked, revalidates with the standard writer,
 advances the schema baseline and renamed operation bindings, and stages exactly those paths. It also writes
 `manifest.json` and `body.md`. It never pushes or opens a PR on its own.

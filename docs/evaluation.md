@@ -48,8 +48,9 @@ no writable files and report the expected blocking reason.
 
 Execution uses the native TypeScript transpiler and Node's VM, with imports
 restricted to the fixture modules. **VM is not a security sandbox.** This runner
-is only for reviewed, repository-owned fixtures. AutoPatch never executes arbitrary
-target projects or LLM-generated code. The fixtures do not measure real HTTP server
+is only for reviewed, repository-owned fixtures. The core planner and writer do not execute target code. Scheduled monitoring
+can run explicitly configured application checks in a disposable checkout;
+monitoring never enables LLM repair. The fixtures do not measure real HTTP server
 behavior, latency, provider quality, or compatibility with every SDK generator.
 
 ## Extending the evidence
@@ -114,3 +115,24 @@ client, not a full Paddle upgrade or live payment test.
 [Observed draft PR delivery](delivery-evidence.md) records the GitHub workflow run.
 [Customer validation](customer-validation.md) describes the proposed pilot; no
 customer results have been measured.
+
+## Monitor preparation checks
+
+On 2026-09-09, the four configured public sources were downloaded and pinned.
+Their captured raw snapshots were then replayed through the monitor in separate
+clean Git checkouts, with real filesystem writes and configured application checks.
+All four prepared a verified patch. After committing each patch in its disposable
+checkout, a second poll returned `unchanged`. No PR was published by this check.
+
+| Provider | Captured upstream revision | Application observation |
+| --- | --- | --- |
+| Stripe | `32561ba834b5e1ec2e2725052b76ba9944180673` | Active label and true/null cancellation flag |
+| Paddle | `540ea17369325ff866b65ecf6c5105592f16fb5d` | Existing customer-portal cancellation URL |
+| Chargebee | `2c7ce2c8a72c7393bece50ff418033130bdc9591` | Active subscription view |
+| Recurly | `0dcfa5b9f620071c5c5b4a6c236fe85198fae600` | Explicit one-cycle pause request |
+
+These checks use the [authored example adapters](../examples/README.md), not customer
+applications or live billing accounts. Regression tests also exercise failed-check
+recovery, retained diagnostics, provider retries, publication retries after base
+advancement, and notice deduplication through the public monitor/publisher CLIs.
+The [monitoring guide](monitoring.md) describes scope and operational limits.
