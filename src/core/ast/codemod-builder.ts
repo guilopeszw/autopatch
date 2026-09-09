@@ -1,4 +1,5 @@
 import { Node, ts, type FunctionDeclaration, type InterfaceDeclaration, type Project } from "ts-morph";
+import { assertRenameSafety } from "./rename-safety.js";
 import type { SchemaChange } from "../diff/openapi-differ.js";
 
 /** Explicit SDK binding: paths are absolute or relative to the project root. */
@@ -52,6 +53,7 @@ export function applyCodemods(project: Project, changes: readonly SchemaChange[]
       if (declaration.getType().getProperty(change.to)) throw new Error(`Property rename collision: ${change.to}`);
       const property = declaration.getPropertyOrThrow(change.from);
       if (!Node.isPropertySignature(property)) throw new Error(`Not a property: ${change.from}`);
+      assertRenameSafety(property);
       property.rename(change.to, { usePrefixAndSuffixText: true });
     } else {
       const binding = bindings.schemas[change.schema];
