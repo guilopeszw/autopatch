@@ -1,11 +1,15 @@
-import type { Project } from "ts-morph";
-import { applyCodemods, type Bindings } from "../ast/codemod-builder.js";
+import type { CallExpression, Project } from "ts-morph";
+import { applyCodemods, resolveOperation, type Bindings } from "../ast/codemod-builder.js";
+import { findCallSites } from "../ast/callsite-finder.js";
+import { repairCallSites, type RepairOptions, type RepairTransport } from "../agent/llm-fixer.js";
 import { diffOpenApi, type SchemaChange } from "../diff/openapi-differ.js";
 import { checkProject, type CompilerError } from "./type-checker.js";
 
 /** A verified edit includes its preimage so the writer can detect stale plans. */
 export interface FilePatch { path: string; before: string; after: string }
+export interface MigrationOptions { repair?: RepairOptions & { transport: RepairTransport } }
 export interface MigrationResult {
+  llmAttempts: number;
   status: "verified" | "blocked";
   changes: SchemaChange[];
   files: FilePatch[];
@@ -22,12 +26,12 @@ export interface MigrationResult {
  * the disk writer must verify them again immediately before persistence.
  */
 export async function migrateProject(
-  project: Project, before: unknown, after: unknown, bindings: Bindings,
+  project: Project, before: unknown, after: unknown, bindings: Bindings, options: MigrationOptions = {},
 ): Promise<MigrationResult> {
   project.resolveSourceFileDependencies();
-  const options = project.getCompilerOptions();
+  const compilerOptions = project.getCompilerOptions();
   const originals = new Map(project.getSourceFiles().map((source) => [source, source.getFullText()]));
-  const result: MigrationResult = { status: "blocked", changes: [], files: [], diagnostics: [], issues: [] };
+  const result: MigrationResult = { status: "blocked", llmAttempts: 0, changes: [], files: [], diagnostics: [], issues: [] };
   try {
     project.compilerOptions.set({ strict: true, noEmit: true, noCheck: false, skipLibCheck: false });
     const baseline = checkProject(project);
@@ -43,7 +47,28 @@ export async function migrateProject(
       return result;
     }
     applyCodemods(project, result.changes, bindings);
-    const validation = checkProject(project);
+    let validation = checkProject(project);
+    if (!validation.success && options.repair) {
+      const candidates = new Set<CallExpression>();
+      for (const [id, binding] of Object.entries(bindings.operations)) {
+        const rename = result.changes.find((change) => change.kind === "operation-renamed" && change.from === id);
+        const declaration = resolveOperation(project, { ...binding, export: rename?.kind === "operation-renamed" ? rename.to : binding.export });
+        for (const call of findCallSites(declaration)) {
+          if (validation.errors.some((error) => containsError(call, error))) candidates.add(call);
+        }
+      }
+      // A containing call already supplies enough context to repair nested calls.
+      const calls = [...candidates].filter((call) => ![...candidates].some((other) =>
+        other !== call && other.getSourceFile() === call.getSourceFile() && other.getStart() <= call.getStart() && other.getEnd() >= call.getEnd()));
+      if (validation.errors.every((error) => calls.some((call) => containsError(call, error)))) {
+        const repair = await repairCallSites(project, calls, result.changes, options.repair.transport, options.repair);
+        result.llmAttempts = repair.attempts;
+        result.issues.push(...repair.issues);
+        validation = checkProject(project);
+      } else {
+        result.issues.push("Compiler errors outside bound call sites require manual changes");
+      }
+    }
     result.diagnostics = validation.errors;
     if (!validation.success) {
       result.issues.push("Migrated project has compiler errors; no patch may be written");
@@ -65,6 +90,11 @@ export async function migrateProject(
       if (source.getFullText() !== original) source.replaceWithText(original);
     }
     project.compilerOptions.reset();
-    project.compilerOptions.set(options);
+    project.compilerOptions.set(compilerOptions);
   }
+}
+
+function containsError(call: CallExpression, error: CompilerError): boolean {
+  return error.file === call.getSourceFile().getFilePath() && error.start !== undefined &&
+    error.start >= call.getStart() && error.start < call.getEnd();
 }

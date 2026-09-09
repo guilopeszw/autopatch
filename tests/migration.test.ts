@@ -47,3 +47,21 @@ test("does not let noCheck or skipLibCheck hide baseline errors", async () => {
   expect(result.files).toEqual([]);
   expect(project.getCompilerOptions().noCheck).toBe(true);
 });
+
+test("repairs affected bound calls as a batch while keeping all other source out of model context", async () => {
+  const { project, bindings, schema } = setup();
+  project.getSourceFileOrThrow('/consumer.ts').addStatements('submit({ count: "4" });');
+  project.createSourceFile('/secret.ts', 'export const secret = "not-model-context";');
+  const requests: string[] = [];
+  const result = await migrateProject(project, schema('string'), schema('number'), bindings, {
+    repair: { transport: async (request) => {
+      requests.push(JSON.stringify(request));
+      return request.snippet.includes('"4"') ? 'submit({ count: 4 })' : 'submit({ count: 3 })';
+    } },
+  });
+  expect(result.status).toBe('verified');
+  expect(result.files).toHaveLength(2);
+  expect(result.llmAttempts).toBe(1);
+  expect(requests).toHaveLength(2);
+  expect(requests.join('')).not.toContain('not-model-context');
+});
