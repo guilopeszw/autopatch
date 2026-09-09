@@ -19,6 +19,19 @@ export const corpus: EvaluationCase[] = [{
   expected: { status: 'verified', before: 'person:42', after: 'person:42' },
 }];
 
+corpus.push({
+  id: 'arrow-operation-rename',
+  description: 'Rename an exported arrow-function SDK operation through a barrel and preserve its import alias.',
+  before: operationDoc('getPerson'), after: operationDoc('fetchPerson'),
+  files: {
+    '/sdk.ts': 'export const getPerson = (id: string): string => `person:${id}`;',
+    '/index.ts': 'export { getPerson } from "./sdk.js";',
+    '/consumer.ts': 'import { getPerson as load } from "./index.js"; export const result = load("42");',
+  },
+  bindings: { operations: { getPerson: { file: '/sdk.ts', export: 'getPerson' } }, schemas: {} },
+  expected: { status: 'verified', before: 'person:42', after: 'person:42' },
+});
+
 const objectDoc = (properties: Record<string, unknown>, required: string[] = ['id']) => ({
   openapi: '3.1.0', info: { title: 'Evaluation API', version: '1' }, paths: {},
   components: { schemas: { Input: { type: 'object', properties, required } } },

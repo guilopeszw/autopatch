@@ -1,4 +1,4 @@
-import { Node, Project, ts, type FunctionDeclaration, type InterfaceDeclaration } from "ts-morph";
+import { Node, Project, ts, type FunctionDeclaration, type InterfaceDeclaration, type VariableDeclaration } from "ts-morph";
 import { checkProject } from "../runner/type-checker.js";
 import { assertRenameSafety } from "./rename-safety.js";
 import type { SchemaChange } from "../diff/openapi-differ.js";
@@ -12,12 +12,19 @@ export interface Bindings {
   schemas: Record<string, SchemaBinding>;
 }
 
-/** Resolve a concrete declaration; never guess an SDK binding from a shared name. */
-export function resolveOperation(project: Project, binding: SymbolBinding): FunctionDeclaration {
+/**
+ * Resolve an explicitly bound local function or exported arrow variable. Return
+ * its declaration so rename and repair share the same symbol identity. Imported
+ * aliases and factory-produced functions require a concrete local SDK binding.
+ */
+export function resolveOperation(project: Project, binding: SymbolBinding): FunctionDeclaration | VariableDeclaration {
   const source = project.getSourceFileOrThrow(binding.file);
-  const declaration = source.getFunctionOrThrow(binding.export);
-  if (!declaration.isExported() || source.isInNodeModules()) throw new Error(`Operation binding must be a local export: ${binding.export}`);
-  return declaration;
+  if (source.isInNodeModules()) throw new Error(`Operation binding must be a local export: ${binding.export}`);
+  const declaration = source.getFunction(binding.export);
+  if (declaration?.isExported()) return declaration;
+  const variable = source.getVariableDeclaration(binding.export);
+  if (variable?.getVariableStatement()?.isExported() && Node.isArrowFunction(variable.getInitializer())) return variable;
+  throw new Error(`Operation binding must name a local exported function or arrow variable: ${binding.export}`);
 }
 
 function resolveSchema(project: Project, binding: SymbolBinding): InterfaceDeclaration {

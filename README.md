@@ -80,7 +80,7 @@ project's own tests before merging them.
 
 | Change | Behavior |
 | --- | --- |
-| `operationId` renamed on the same method/path | Rename the bound local function and its symbol references |
+| `operationId` renamed on the same method/path | Rename the bound local function declaration or exported arrow variable and its symbol references |
 | Property renamed with explicit provenance | Rename the bound interface property and resolved references |
 | Direct property added/removed | Add/remove the interface member; compiler errors block incompatible consumers |
 | Property type or requiredness changed | Update the interface type and optional marker; validate every consumer |
@@ -132,8 +132,12 @@ unrecognized differences are handled conservatively.
 ## Bind a local SDK
 
 Paths in the bindings file are relative to the target tsconfig directory.
-Operation bindings identify local exported function declarations; schema bindings
-identify exported interface declarations. Bindings refer to the **old** revision.
+Operation bindings identify local exported function declarations or variables with
+an arrow-function initializer, such as `export const createUser = (input: Input) =>
+input.id`. Schema bindings identify exported interface declarations. Bindings refer
+to the **old** revision. Factory-created functions, function expressions, re-export
+aliases used as the binding itself, and class methods are not resolved as operation
+bindings; bind the supported declaration in its defining SDK file.
 
 ```json
 {
