@@ -109,7 +109,7 @@ export function diffOpenApi(before: unknown, after: unknown): SchemaChange[] {
     if ((oldSchema.type !== undefined && oldSchema.type !== "object") ||
         (newSchema.type !== undefined && newSchema.type !== "object") ||
         ["allOf", "oneOf", "anyOf", "$ref"].some((key) => key in oldSchema || key in newSchema) ||
-        canonical(omit(oldSchema, ["properties", "required", ...metadata])) !== canonical(omit(newSchema, ["properties", "required", ...metadata]))) {
+        canonical(schemaConstraints(oldSchema)) !== canonical(schemaConstraints(newSchema))) {
       unsupported(schema, "Only direct object properties can be migrated; schema-level constraints changed");
       continue;
     }
@@ -150,6 +150,10 @@ export function diffOpenApi(before: unknown, after: unknown): SchemaChange[] {
 }
 
 const metadata = ["description", "title", "example", "examples", "deprecated", "x-autopatch-previous-name"];
+/** OAS 3.0/3.1 allow additional properties by default; false and schema constraints remain significant. */
+function schemaConstraints(schema: ObjectValue): ObjectValue {
+  return omit(schema, ["properties", "required", ...metadata, ...(schema.additionalProperties === true ? ["additionalProperties"] : [])]);
+}
 function omit(value: ObjectValue, keys: readonly string[]): ObjectValue {
   return Object.fromEntries(Object.entries(value).filter(([key]) => !keys.includes(key)));
 }

@@ -43,3 +43,12 @@ test("rejects ambiguous property rename hints instead of merging two fields", ()
     document({ type: "object", properties: { label: { type: "string", "x-autopatch-previous-name": "name" } } }),
   )).toThrow(/ambiguous/i);
 });
+
+test("treats explicit default additionalProperties as unchanged while retaining actual constraints", () => {
+  const before = document({ type: "object", properties: { status: { type: "string" } } });
+  const explicitDefault = document({ type: "object", additionalProperties: true, properties: { status: { type: "string" } } });
+  expect(diffOpenApi(before, explicitDefault)).toEqual([]);
+  expect(diffOpenApi(explicitDefault, before)).toEqual([]);
+  expect(diffOpenApi(before, document({ type: "object", additionalProperties: false, properties: { status: { type: "string" } } })))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+});
