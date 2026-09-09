@@ -123,6 +123,22 @@ test('removes its staged replacements after a failed check without overwriting c
   expect(f.git('diff', '--name-only').trim()).toBe('api.ts');
 });
 
+test('retains useful output and the exit status when an application check fails', async () => {
+  const f = fixture();
+  const config = JSON.parse(readFileSync(join(f.root, 'monitor.json'), 'utf8'));
+  config.verify = [[process.execPath, '-e', "console.log('Checking cancellation'); console.error('Expected access through paid period'); process.exit(7)"]];
+  writeFileSync(join(f.root, 'monitor.json'), JSON.stringify(config));
+  f.git('add', '.'); f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'test: expose application check diagnostics');
+  const { code, output, manifest } = await f.run('check-output', true);
+  expect(code).toBe(1);
+  expect(JSON.parse(readFileSync(join(output, 'checks.json'), 'utf8'))).toEqual([
+    expect.objectContaining({ status: 'failed', exitCode: 7, stdout: 'Checking cancellation\n', stderr: 'Expected access through paid period\n' }),
+  ]);
+  expect(manifest.issues).toContain('Application check 1 failed (exit 7); inspect checks.json');
+  expect(readFileSync(join(output, 'failure.txt'), 'utf8')).toContain('exit 7');
+  expect(f.git('status', '--porcelain')).toBe('');
+});
+
 test('retries a transient provider failure and reads an immutable YAML specification', async () => {
   const f = fixture();
   const config = JSON.parse(readFileSync(join(f.root, 'monitor.json'), 'utf8'));

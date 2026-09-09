@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { Project } from "ts-morph";
@@ -74,17 +74,21 @@ export async function runMonitorCli(args: readonly string[], output: Output = { 
         const before = readFileSync(path, "utf8");
         if (before !== candidateText) edits.set(path, { before, after: candidateText });
       }
-      const checks: { command: string[]; status: string }[] = [];
+      const checks: { command: string[]; status: string; exitCode: number | null; stdout: string; stderr: string; error?: string }[] = [];
       try {
         writeVerifiedPatch(new Project({ tsConfigFilePath: files.project }), result, dirname(files.project));
         for (const path of [files.from, files.to]) if (edits.has(path)) writeFileSync(path, candidateText);
         // Only commands from the trusted, tracked configuration run. Provider
         // documents cannot provide commands; model repair is never enabled here.
         for (const [executable, ...arguments_] of config.verify) {
-          const check = { command: [executable!, ...arguments_], status: "failed" }; checks.push(check);
           const environment = { ...process.env }; delete environment.GH_TOKEN; delete environment.GITHUB_TOKEN;
-          execFileSync(executable!, arguments_, { cwd: root, env: environment, timeout: 120_000, maxBuffer: 1_000_000, stdio: "pipe" });
-          check.status = "passed";
+          const execution = spawnSync(executable!, arguments_, { cwd: root, env: environment, timeout: 120_000, killSignal: "SIGKILL", maxBuffer: 1_000_000, encoding: "utf8" });
+          const passed = !execution.error && execution.status === 0;
+          // Keep bounded diagnostics in artifacts, not in public issue bodies.
+          checks.push({ command: [executable!, ...arguments_], status: passed ? "passed" : "failed", exitCode: execution.status,
+            stdout: (execution.stdout ?? "").slice(-64_000), stderr: (execution.stderr ?? "").slice(-64_000),
+            ...(execution.error ? { error: execution.error.message.slice(0, 1_000) } : {}) });
+          if (!passed) throw new Error(`Application check ${checks.length} failed (${execution.error ? execution.error.message.slice(0, 1_000) : `exit ${execution.status ?? execution.signal}`}); inspect checks.json`);
         }
         for (const path of git("diff", "--name-only", "-z").split("\0").filter(Boolean)) {
           if (!edits.has(resolve(root, path))) throw new Error("Application checks modified unrelated tracked files");
@@ -95,7 +99,9 @@ export async function runMonitorCli(args: readonly string[], output: Output = { 
         if (manifest.files.length) git("add", "--", ...manifest.files);
         manifest.patchSha256 = digest(git("diff", "--cached", "--binary", "--full-index"));
         manifest.prepared = true;
-      } catch {
+      } catch (error) {
+        const reason = (error instanceof Error ? error.message : String(error)).slice(0, 2_000);
+        manifest.issues.push(reason);
         // Restore only our unchanged replacements. Preserve concurrent edits;
         // the workflow discards this checkout after any failed preparation.
         for (const [path, edit] of edits) {
@@ -114,7 +120,7 @@ export async function runMonitorCli(args: readonly string[], output: Output = { 
           }
         }
         status = "blocked"; manifest.status = status; manifest.files = [];
-        writeFileSync(join(artifact, "failure.txt"), "Application checks or preparation failed; no PR may be published. Inspect the configured checks in a disposable checkout.\n", { flag: "wx", mode: 0o600 });
+        writeFileSync(join(artifact, "failure.txt"), `${reason}\nNo PR may be published. Inspect checks.json and the disposable checkout.\n`, { flag: "wx", mode: 0o600 });
       }
       writeFileSync(join(artifact, "checks.json"), stableJson(checks), { flag: "wx", mode: 0o600 });
     }
