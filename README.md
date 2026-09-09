@@ -23,7 +23,8 @@ npm run demo       # verified preview against the included fixture; no writes
 The demo migrates `createUser` → `registerUser` and `CreateUser.name` →
 `CreateUser.displayName`. It preserves the `saveUser` import alias and the local
 `name` variable, expanding `{ name }` to `{ displayName: name }`. Unrelated
-objects with a `name` field remain unchanged.
+objects with a `name` field remain unchanged. Structural producers outside the
+compiler symbol references are rejected until their field flow can be proven.
 
 ```sh
 npm run autopatch -- \
@@ -53,7 +54,9 @@ flowchart LR
 ```
 
 1. Load the target project and require a clean baseline. The runner enables
-   `strict`, disables `noCheck` and `skipLibCheck`, and performs no emit.
+   `strict` and every strict suboption, disables `noCheck` and library-check
+   suppression, and performs no emit. Explicit permissive target flags cannot
+   weaken the gate.
 2. Match operations by **HTTP method + path**. Resolve SDK declarations through
    explicit bindings, never through a project-wide name guess.
 3. Rename symbols with the TypeScript language service. Update interface
@@ -211,6 +214,7 @@ changes in a pull request after running the target application's tests.
 | `bin/autopatch.ts`, `src/cli.ts` | Process boundary, CLI options, input validation, reporting |
 | `src/core/diff/openapi-differ.ts` | Deterministic change classification and explicit unsupported cases |
 | `src/core/ast/callsite-finder.ts` | Symbol-based discovery of direct calls |
+| `src/core/ast/rename-safety.ts` | Prove structural property flows are covered before renaming |
 | `src/core/ast/codemod-builder.ts` | Explicit bindings and deterministic AST edits |
 | `src/core/agent/llm-fixer.ts` | Context isolation, AST response validation, batch repair loop |
 | `src/core/agent/providers.ts` | Bounded native-fetch OpenAI/Anthropic adapters |
@@ -230,3 +234,6 @@ Primary references: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html),
 [diagnostics](https://ts-morph.com/setup/diagnostics),
 [OpenAI Responses](https://developers.openai.com/api/reference/resources/responses/methods/create),
 and [Anthropic Messages](https://platform.claude.com/docs/en/api/http/messages/create).
+
+The independent two-axis [PR #1 review](docs/reviews/pr-1.md) records findings,
+reproductions and their resolutions.
