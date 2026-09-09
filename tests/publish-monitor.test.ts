@@ -40,7 +40,7 @@ function fixture() {
     throw new Error(`Unexpected request ${method} ${url.pathname}`);
   };
   vi.stubEnv('GH_TOKEN', 'test-token');
-  const run = (transport = fetcher) => runPublishCli(['--root', root, '--output', output, '--repository', 'example/app', '--base', 'main'], { out: () => {}, err: () => {} }, transport);
+  const run = (transport = fetcher, extra: string[] = []) => runPublishCli(['--root', root, '--output', output, '--repository', 'example/app', '--base', 'main', ...extra], { out: () => {}, err: () => {} }, transport);
   return { root, remote, output, git, head, manifest, requests, pulls, run, fetcher };
 }
 
@@ -123,4 +123,35 @@ test('recovers an orphan draft branch after unrelated changes land on the defaul
   expect(f.pulls).toHaveLength(1);
   expect(f.git('ls-remote', '--heads', 'origin', branch)).toContain(pushed);
   expect(f.git('rev-parse', 'HEAD').trim()).toBe(newHead);
+});
+
+test('deduplicates and closes notices authored by a configured custom publisher', async () => {
+  const f = fixture();
+  const manifest = { id: 'billing', status: 'blocked', prepared: false, files: [], issues: ['Unsupported contract change'] };
+  writeFileSync(join(f.output, 'manifest.json'), JSON.stringify(manifest));
+  const issues: Record<string, unknown>[] = [];
+  const mutations: string[] = [];
+  const transport: typeof fetch = async (input, options) => {
+    const method = options?.method ?? 'GET';
+    const path = new URL(String(input)).pathname;
+    if (path.endsWith('/issues') && method === 'GET') return Response.json(issues);
+    const body = JSON.parse(String(options?.body));
+    if (path.endsWith('/issues') && method === 'POST') {
+      mutations.push(method);
+      const issue = { number: 1, state: 'open', user: { login: 'billing-maintainer[bot]' }, ...body };
+      issues.push(issue); return Response.json(issue);
+    }
+    if (path.endsWith('/issues/1') && method === 'PATCH') {
+      mutations.push(method); Object.assign(issues[0]!, body); return Response.json(issues[0]);
+    }
+    throw new Error(`Unexpected request ${method} ${path}`);
+  };
+  const args = ['--issue-author', 'billing-maintainer[bot]'];
+  expect(await f.run(transport, args)).toBe(0);
+  expect(await f.run(transport, args)).toBe(0);
+  expect(mutations).toEqual(['POST']);
+  writeFileSync(join(f.output, 'manifest.json'), JSON.stringify({ ...manifest, status: 'unchanged', issues: [] }));
+  expect(await f.run(transport, args)).toBe(0);
+  expect(mutations).toEqual(['POST', 'PATCH']);
+  expect(issues[0]).toMatchObject({ state: 'closed' });
 });

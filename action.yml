@@ -7,6 +7,9 @@ inputs:
   token:
     description: GitHub token with contents, pull-requests, and issues write permissions.
     required: true
+  issue-author:
+    description: Login that creates issues with this token; set for a custom GitHub App or personal token.
+    default: github-actions[bot]
 outputs:
   status:
     description: ready, unchanged, blocked, or failed.
@@ -76,11 +79,13 @@ runs:
         GH_TOKEN: ${{ inputs.token }}
         GH_REPO: ${{ github.repository }}
         BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        ISSUE_AUTHOR: ${{ inputs.issue-author }}
         AUTOPATCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
         gh auth setup-git
         node --import "$TOOL_ROOT/node_modules/tsx/dist/loader.mjs" "$TOOL_ROOT/scripts/publish-monitor.ts" \
-          --root "$GITHUB_WORKSPACE" --output "$REPORT" --repository "$GH_REPO" --base "$BASE_BRANCH" | tee -a "$GITHUB_STEP_SUMMARY"
+          --root "$GITHUB_WORKSPACE" --output "$REPORT" --repository "$GH_REPO" --base "$BASE_BRANCH" \
+          --issue-author "$ISSUE_AUTHOR" | tee -a "$GITHUB_STEP_SUMMARY"
     - name: Require a successful monitor result
       if: ${{ always() && steps.monitor.outputs.exit-code != '0' }}
       shell: bash

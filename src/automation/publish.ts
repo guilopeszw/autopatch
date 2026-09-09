@@ -17,9 +17,11 @@ export async function runPublishCli(args: readonly string[], output: Output = { 
       .requiredOption("--root <directory>", "prepared repository checkout")
       .requiredOption("--output <directory>", "monitor artifacts")
       .requiredOption("--repository <owner/repo>", "destination GitHub repository")
-      .requiredOption("--base <branch>", "human-reviewed destination branch");
+      .requiredOption("--base <branch>", "human-reviewed destination branch")
+      .option("--issue-author <login>", "GitHub login used by the publishing token", "github-actions[bot]");
     command.parse([...args], { from: "user" });
-    const options = command.opts<{ root: string; output: string; repository: string; base: string }>();
+    const options = command.opts<{ root: string; output: string; repository: string; base: string; issueAuthor: string }>();
+    if (!/^[a-zA-Z0-9_-]+(?:\[bot\])?$/.test(options.issueAuthor)) throw new Error("Invalid issue author login");
     const root = realpathSync(options.root);
     const git = (...values: string[]) => execFileSync("git", values, { cwd: root, encoding: "utf8", timeout: 30_000, maxBuffer: 10_000_000, stdio: ["ignore", "pipe", "pipe"] });
     if (realpathSync(git("rev-parse", "--show-toplevel").trim()) !== root || !/^[\w.-]+\/[\w.-]+$/.test(options.repository)) throw new Error("Invalid repository checkout or destination");
@@ -56,7 +58,7 @@ export async function runPublishCli(args: readonly string[], output: Output = { 
         const issues = await api(`/issues?state=all&per_page=100&page=${page}`);
         if (!Array.isArray(issues)) throw new Error("Invalid GitHub issue response");
         prior = issues.map(issue => object(issue, "issue")).find(issue => !issue.pull_request && typeof issue.body === "string" && issue.body.includes(marker) &&
-          ["github-actions[bot]", options.repository.split("/")[0]].includes(String(object(issue.user, "issue author").login)));
+          String(object(issue.user, "issue author").login).toLowerCase() === options.issueAuthor.toLowerCase());
         if (prior || issues.length < 100) break;
         if (page === 10) throw new Error("Monitor issue lookup exceeded 1,000 issues; inspect before retrying");
       }
