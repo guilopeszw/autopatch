@@ -9,7 +9,7 @@
     "description": "The Stripe REST API. Please see https://stripe.com/docs/api for more details.",
     "termsOfService": "https://stripe.com/us/terms/",
     "title": "Stripe API",
-    "version": "2025-02-24.acacia",
+    "version": "2025-03-31.basil",
     "x-stripeSpecFilename": "spec3"
   },
   "paths": {},
@@ -39,23 +39,11 @@
           },
           "cancel_at_period_end": {
             "description": "Whether this subscription will (if `status=active`) or did (if `status=canceled`) cancel at the end of the current billing period.",
+            "nullable": true,
             "type": "boolean"
-          },
-          "current_period_start": {
-            "description": "Start of the current period that the subscription has been invoiced for.",
-            "format": "unix-time",
-            "type": "integer"
-          },
-          "current_period_end": {
-            "description": "End of the current period that the subscription has been invoiced for. At the end of this period, a new invoice will be created.",
-            "format": "unix-time",
-            "type": "integer"
           }
         },
         "required": [
-          "cancel_at_period_end",
-          "current_period_end",
-          "current_period_start",
           "id",
           "status"
         ]
