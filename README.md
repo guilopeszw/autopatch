@@ -7,6 +7,8 @@ Brex and Ramp are secondary contract cases.
 Use [`--report`](docs/review-report.md) for the standalone review UI, or the
 [GitHub workflow](docs/schema-migration-workflow.md) to propose verified draft PRs
 when checked-in target schemas change. Provider coverage is bounded and documented.
+See [actual workflow-generated draft PRs](docs/delivery-evidence.md) and the
+[historical Paddle release with a generated client](tests/fixtures/paddle-release/README.md).
 
 AutoPatch migrates explicitly bound TypeScript API contracts and consumers using
 **ts-morph symbol references and native TypeScript diagnostics**. Deterministic
