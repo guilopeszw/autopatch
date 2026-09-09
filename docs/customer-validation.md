@@ -4,7 +4,9 @@
 
 A team with a TypeScript billing integration spends enough time diagnosing and
 repairing provider contract changes to value compiler-verified migration PRs.
-This has not been validated with a customer. The first participant should own a
+This has not been validated with a customer. The separate
+[independent application check](adoption-check.md) found adoption blockers in a
+public starter; it is not customer evidence. The first participant should own a
 working Stripe, Paddle, Chargebee, or Recurly integration and be able to describe
 a recent migration and its actual review process.
 

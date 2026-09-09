@@ -136,3 +136,7 @@ applications or live billing accounts. Regression tests also exercise failed-che
 recovery, retained diagnostics, provider retries, publication retries after base
 advancement, and notice deduplication through the public monitor/publisher CLIs.
 The [monitoring guide](monitoring.md) describes scope and operational limits.
+
+An [independent application baseline check](adoption-check.md) also records a
+blocked Next.js SaaS Starter attempt, including compiler/dependency differences.
+It is excluded from completed-migration counts.
