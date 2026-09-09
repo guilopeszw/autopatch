@@ -20,7 +20,8 @@ evidence. This focus does not claim complete provider API coverage.
   source changes, compiler findings, and honest deterministic/LLM provenance.
 - A checked-in schema update prepares verified source edits and opens a draft PR.
 - Blocked runs expose findings without a writable patch or a source commit.
-- Keep review artifacts private with the repository; use no new hosted service.
+- Keep review artifacts with the repository; use no new hosted service. The owner
+  subsequently chose public MVP distribution for committee access.
 
 Live provider-model validation still needs a configured key and model. Slack is
 a later notification layer. Adding more financial API providers does not mean
@@ -79,7 +80,8 @@ target a no-op after its migration is merged. Updating operation keys and export
 also keeps the next operation rename bound to the correct declaration. Configured
 property defaults should be reviewed when renaming or changing their contracts.
 
-HTML and JSON artifacts are attached to the private workflow run for seven days.
+HTML and JSON artifacts are attached to the workflow run for seven days. Their
+access follows GitHub's repository and artifact-download rules; this MVP is public.
 PR bodies link to that run. GitHub may require human approval before running PR
 checks generated using `GITHUB_TOKEN`; the originating run has already executed
 the repository checks. See [GitHub's workflow trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
