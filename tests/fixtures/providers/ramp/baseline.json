@@ -1,0 +1,66 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Ramp Developer API",
+    "version": "authored-incomplete-adapter"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "ApiTransactionCardHolder": {
+        "properties": {
+          "department_id": {
+            "description": "ID of the card holder's department.",
+            "format": "uuid",
+            "type": "string",
+            "x-relationship": {
+              "inverse_field_name": null,
+              "reference_field_name": "id",
+              "target_resource": "departments",
+              "type": "many-to-one"
+            }
+          },
+          "department_name": {
+            "description": "Name of the card holder's deparment.",
+            "type": "string"
+          },
+          "first_name": {
+            "description": "Card holder's first name.",
+            "type": "string"
+          },
+          "last_name": {
+            "description": "Card holder's last name.",
+            "type": "string"
+          },
+          "location_id": {
+            "description": "ID of the card holder's location.",
+            "format": "uuid",
+            "type": "string",
+            "x-relationship": {
+              "inverse_field_name": null,
+              "reference_field_name": "id",
+              "target_resource": "locations",
+              "type": "many-to-one"
+            }
+          },
+          "location_name": {
+            "description": "Name of the card holder's location.",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "Card holder's ID.",
+            "format": "uuid",
+            "type": "string",
+            "x-relationship": {
+              "inverse_field_name": null,
+              "reference_field_name": "id",
+              "target_resource": "users",
+              "type": "many-to-one"
+            }
+          }
+        },
+        "type": "object"
+      }
+    }
+  }
+}

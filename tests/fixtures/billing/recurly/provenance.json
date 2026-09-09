@@ -1,0 +1,17 @@
+{
+  "provider": "recurly",
+  "repository": "recurly/recurly-client-go",
+  "commit": "0dcfa5b9f620071c5c5b4a6c236fe85198fae600",
+  "url": "https://raw.githubusercontent.com/recurly/recurly-client-go/0dcfa5b9f620071c5c5b4a6c236fe85198fae600/openapi/api.yaml",
+  "sourceSha256": "8149c8fb9d91e299033e8e99aee27b8e32e0a3150684773d65c06e9ba99b119d",
+  "component": "SubscriptionPause",
+  "properties": [
+    "remaining_pause_cycles"
+  ],
+  "scope": "Published target contract; authored local adapter baseline. Not a historical release migration.",
+  "files": {
+    "target.json": "8726b9246308dd302679a2c49ce983f5a8b9db91812bd7a11475322d5b95611a",
+    "baseline.json": "25000a91c646641cb4286b059e1849525e6c8bfee679f02cd6107ab50f4dcba6",
+    "LICENSE": "37fc9224ae36c38e70c2d32161fc63638ec76c7e3282f94cbd25050526a18284"
+  }
+}

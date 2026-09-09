@@ -18,6 +18,56 @@ function fixture() {
     '--project', join(root, 'tsconfig.json'), '--bindings', join(root, 'bindings.json'), '--json'] };
 }
 
+test('exports a readable standalone review report with exact edits while preserving the preview', async () => {
+  const { root, args } = fixture();
+  const original = readFileSync(join(root, 'consumer.ts'), 'utf8');
+  const report = join(root, 'review.html');
+  let output = '';
+  expect(await runCli([...args, '--report', report], { out: text => { output += text; }, err: () => {} }), output).toBe(0);
+  const html = readFileSync(report, 'utf8');
+  expect(html).toContain('Verified migration plan');
+  expect(html).toContain('createUser');
+  expect(html).toContain('registerUser');
+  expect(html).toContain('Before');
+  expect(html).toContain('After');
+  expect(html).toContain('No LLM repair requests');
+  expect(html).toContain('Bound symbol:');
+  expect(html).toContain('consumer.ts:');
+  expect(html).toContain('Type checking does not prove business correctness');
+  expect(html).not.toContain('<script');
+  expect(JSON.parse(output)).toMatchObject({ status: 'verified', written: false });
+  expect(readFileSync(join(root, 'consumer.ts'), 'utf8')).toBe(original);
+});
+
+test('renders source as inert text and exports actionable blocked findings', async () => {
+  const { root, args } = fixture();
+  const consumer = readFileSync(join(root, 'consumer.ts'), 'utf8');
+  writeFileSync(join(root, 'consumer.ts'), `${consumer}\n// <script>alert("source")</script>\n`);
+  const report = join(root, 'escaped.html');
+  expect(await runCli([...args, '--report', report], { out: () => {}, err: () => {} })).toBe(0);
+  const html = readFileSync(report, 'utf8');
+  expect(html).toContain('&lt;script&gt;');
+  expect(html).not.toContain('<script>');
+  expect(html).toContain("default-src 'none'");
+  writeFileSync(join(root, 'consumer.ts'), `${consumer}\nconst broken: string = 123;\n`);
+  const blocked = join(root, 'blocked.html');
+  expect(await runCli([...args, '--write', '--report', blocked], { out: () => {}, err: () => {} })).toBe(1);
+  const failure = readFileSync(blocked, 'utf8');
+  expect(failure).toContain('Migration blocked');
+  expect(failure).toContain('TS2322');
+  expect(failure).toContain('No writable source edits');
+});
+
+test('refuses an existing report destination before persisting any source edits', async () => {
+  const { root, args } = fixture();
+  const report = join(root, 'existing.html');
+  writeFileSync(report, 'keep this file');
+  const before = readFileSync(join(root, 'api.ts'), 'utf8');
+  expect(await runCli([...args, '--write', '--report', report], { out: () => {}, err: () => {} })).toBe(2);
+  expect(readFileSync(report, 'utf8')).toBe('keep this file');
+  expect(readFileSync(join(root, 'api.ts'), 'utf8')).toBe(before);
+});
+
 test('previews a compiler-verified migration without writing the target project', async () => {
   const { root, args } = fixture();
   const before = readFileSync(join(root, 'api.ts'), 'utf8');

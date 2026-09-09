@@ -1,0 +1,6 @@
+{
+  "from": "examples/paddle/baseline.json",
+  "to": "examples/paddle/target.json",
+  "project": "examples/paddle/project/tsconfig.json",
+  "bindings": "examples/paddle/project/bindings.json"
+}

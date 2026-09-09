@@ -1,0 +1,32 @@
+{
+  "scope": [
+    "id",
+    "status",
+    "cancel_at_period_end",
+    "current_period_start",
+    "current_period_end"
+  ],
+  "sources": [
+    {
+      "version": "2025-02-24.acacia",
+      "commit": "5a411d0d1e527229cdb4d6633197ab8009899ce6",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/5a411d0d1e527229cdb4d6633197ab8009899ce6/openapi/spec3.json",
+      "sha256": "1199cc3c55746cb73b7be5c67b6e41f9b30b6ac428ca6c6d5ac904fa0f7b6acd",
+      "excerpt": "upstream/before.json"
+    },
+    {
+      "version": "2025-03-31.basil",
+      "commit": "9fa5188b0933d46d2ac3c601d2d9c50904fb54de",
+      "url": "https://raw.githubusercontent.com/stripe/openapi/9fa5188b0933d46d2ac3c601d2d9c50904fb54de/openapi/spec3.json",
+      "sha256": "38c0bf600b53b308e201df17cb5f8263d78ab0ee52809abcd44738dc6e02c19c",
+      "excerpt": "upstream/after.json"
+    }
+  ],
+  "files": {
+    "upstream/LICENSE": "8c1ce883f4eee7b531e0b7872dbfc72d410ced87dfff9501305de05ca8d203e5",
+    "upstream/before.json": "28e508f620eb0263057815546f0ffe736a3e7c65a07c2069fd69385e10da90c0",
+    "upstream/after.json": "7ee5475ea2dd63081394f1428bf990b45f06d5dc5a7af9a9ac4cc57011045d14",
+    "v1.json": "1e1e39492062948c998649193a888119454c021a163d729e91217d31bba315fd",
+    "v2.json": "7b192991072568d14976e764a6873843494490a4e2584d4eed61672da06d3fdb"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "operations": {},
+  "schemas": {
+    "Address": {
+      "file": "api.ts",
+      "export": "Address"
+    }
+  }
+}

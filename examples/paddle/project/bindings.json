@@ -1,0 +1,9 @@
+{
+  "operations": {},
+  "schemas": {
+    "CustomerPortalSessionUrlsSubscriptionsItem": {
+      "file": "api.ts",
+      "export": "CustomerPortalSessionUrlsSubscriptionsItem"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Paddle API",
+    "version": "authored-adapter-baseline"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "CustomerPortalSessionUrlsSubscriptionsItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "cancel_subscription"
+        ],
+        "properties": {
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionId"
+              }
+            ],
+            "description": "Paddle ID of the subscription that the authenticated customer portal deep links are for."
+          },
+          "cancel_subscription": {
+            "type": "string",
+            "description": "Link to the page for this subscription in the customer portal with the subscription cancellation form pre-opened. Use as part of cancel subscription workflows.",
+            "examples": [
+              "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=cancel_subscription&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
+            ]
+          }
+        },
+        "title": "CustomerPortalSessionSubscriptionUrls",
+        "additionalProperties": false
+      },
+      "SubscriptionId": {
+        "type": "string",
+        "pattern": "^sub_[a-z\\d]{26}$",
+        "description": "Unique Paddle ID for this subscription entity, prefixed with `sub_`.",
+        "title": "Subscription ID",
+        "examples": [
+          "sub_01h04vsc0qhwtsbsxh3422wjs4"
+        ]
+      }
+    }
+  }
+}

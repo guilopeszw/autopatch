@@ -1,0 +1,9 @@
+{
+  "operations": {},
+  "schemas": {
+    "ApiTransactionCardHolder": {
+      "file": "api.ts",
+      "export": "ApiTransactionCardHolder"
+    }
+  }
+}

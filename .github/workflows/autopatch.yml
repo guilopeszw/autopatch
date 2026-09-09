@@ -1,0 +1,101 @@
+name: AutoPatch migrations
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'examples/**/target.json'
+      - 'examples/**/autopatch.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autopatch-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    # Never run a write-capable migration from a fork or arbitrary dispatch ref.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [stripe, paddle, chargebee, recurly]
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      PROVIDER: ${{ matrix.provider }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
+      PATCH_BRANCH: autopatch/${{ matrix.provider }}-${{ github.sha }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Set artifact directory
+        run: printf 'REPORT_DIR=%s/autopatch-%s\n' "$RUNNER_TEMP" "$PROVIDER" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check for an existing PR for this source revision
+        id: existing
+        shell: bash
+        run: |
+          existing=$(gh pr list --state all --head "$PATCH_BRANCH" --json url --jq '.[0].url // empty')
+          if [[ -n "$existing" ]]; then
+            printf 'skip=true\n' >> "$GITHUB_OUTPUT"
+            printf 'Existing migration: %s\n' "$existing" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - run: npm ci
+        if: steps.existing.outputs.skip != 'true'
+      - name: Prepare a verified migration and review artifacts
+        id: prepare
+        if: steps.existing.outputs.skip != 'true'
+        shell: bash
+        run: |
+          node --import tsx scripts/prepare-migration-pr.ts --config "examples/$PROVIDER/autopatch.json" --output "$REPORT_DIR"
+          status=$(node --input-type=module -e 'import fs from "node:fs"; console.log(JSON.parse(fs.readFileSync(process.env.REPORT_DIR + "/manifest.json", "utf8")).status)')
+          printf 'status=%s\n' "$status" >> "$GITHUB_OUTPUT"
+      - name: Attach review artifacts, including blocked findings
+        if: always() && steps.existing.outputs.skip != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: autopatch-${{ matrix.provider }}-${{ github.run_id }}
+          path: ${{ env.REPORT_DIR }}
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Summarize findings
+        if: always() && steps.existing.outputs.skip != 'true'
+        shell: bash
+        run: |
+          if [[ -f "$REPORT_DIR/body.md" ]]; then
+            cat "$REPORT_DIR/body.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Verify the repository before publishing a branch
+        if: steps.prepare.outputs.status == 'ready'
+        run: |
+          npm run typecheck
+          npm test
+          npm run demo
+      - name: Open a draft PR with the verified edits
+        if: steps.prepare.outputs.status == 'ready'
+        shell: bash
+        run: |
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin "$PATCH_BRANCH"; then
+            printf 'Branch already exists without a matching PR; inspect it before retrying.\n' >&2
+            exit 1
+          fi
+          git switch -c "$PATCH_BRANCH"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "fix: migrate $PROVIDER API contract"
+          git push --set-upstream origin "$PATCH_BRANCH"
+          printf '\n[Review artifacts and validation run](%s)\n' "$RUN_URL" >> "$REPORT_DIR/body.md"
+          gh pr create --draft --base "$BASE_BRANCH" --head "$PATCH_BRANCH" --title "fix: migrate $PROVIDER API contract" --body-file "$REPORT_DIR/body.md"

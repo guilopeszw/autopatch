@@ -1,0 +1,6 @@
+{
+  "from": "examples/chargebee/baseline.json",
+  "to": "examples/chargebee/target.json",
+  "project": "examples/chargebee/project/tsconfig.json",
+  "bindings": "examples/chargebee/project/bindings.json"
+}

@@ -1,0 +1,19 @@
+{
+  "provider": "chargebee",
+  "repository": "chargebee/openapi",
+  "commit": "2c7ce2c8a72c7393bece50ff418033130bdc9591",
+  "url": "https://raw.githubusercontent.com/chargebee/openapi/2c7ce2c8a72c7393bece50ff418033130bdc9591/spec/chargebee_api_v2_pc_v2_spec.json",
+  "sourceSha256": "9b65d026651a3fa8bb0da4ea20040b0c98cafb0916a55a6047c18ca8e4c0c9e0",
+  "component": "Subscription",
+  "properties": [
+    "id",
+    "status",
+    "auto_collection"
+  ],
+  "scope": "Published target contract; authored local adapter baseline. Not a historical release migration.",
+  "files": {
+    "target.json": "4fe95f941cab0585c0b813075021ef7b0e7b5def63ab24ab9ee419b103c58846",
+    "baseline.json": "694ac964d15ae88205b6729411ce3b3d8556c9c9915e051faf45e0a159d63b32",
+    "LICENSE": "90a2a84ee36a57347976bc18d5e3551f87c9380ddb06593328599a164ad75c40"
+  }
+}

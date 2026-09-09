@@ -1,5 +1,13 @@
 # AutoPatch
 
+AutoPatch maintains TypeScript integrations with subscription-billing APIs,
+turning supported contract changes into reviewable, compiler-verified patches.
+The primary examples cover [Stripe, Paddle, Chargebee, and Recurly](examples/README.md);
+Brex and Ramp are secondary contract cases.
+Use [`--report`](docs/review-report.md) for the standalone review UI, or the
+[GitHub workflow](docs/schema-migration-workflow.md) to propose verified draft PRs
+when checked-in target schemas change. Provider coverage is bounded and documented.
+
 AutoPatch migrates explicitly bound TypeScript API contracts and consumers using
 **ts-morph symbol references and native TypeScript diagnostics**. Deterministic
 codemods handle supported mechanical changes. Optional LLM repair handles broken
@@ -204,6 +212,7 @@ do not make paid model calls. Live provider quality is not established by them.
 | `--write` | Persist a compiler-verified plan |
 | `--check` | Return 1 when verified edits remain, without writing |
 | `--json` | Structured report with changes, exact files, diagnostics and LLM rounds |
+| `--report <file.html>` | Create a standalone review of the migration plan; destination must not exist |
 | `--llm`, `--model` | Opt-in provider and explicit model ID |
 | `--max-attempts`, `--timeout-ms` | Repair bounds |
 | `--help`, `--version` | CLI metadata |
@@ -228,8 +237,9 @@ process, power failure, or concurrent non-cooperating editor can interrupt the
 operation. A durable journal and editor coordination are outside this version.
 After an interrupted write, inspect Git status and `.autopatch-*.bak` recovery
 copies before removing a stale lock. Never remove another running process's lock.
-No migration automatically creates a Git commit; use a branch and review the
-changes in a pull request after running the target application's tests.
+The CLI does not create a Git commit. The optional GitHub workflow wraps it in a
+branch and draft PR; review changes and run the target application's tests before
+merging.
 
 ## Code and tests
 

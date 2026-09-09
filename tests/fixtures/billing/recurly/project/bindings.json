@@ -1,0 +1,17 @@
+{
+  "operations": {
+    "pauseSubscription": {
+      "file": "api.ts",
+      "export": "pauseSubscription"
+    }
+  },
+  "schemas": {
+    "SubscriptionPause": {
+      "file": "api.ts",
+      "export": "SubscriptionPause",
+      "defaults": {
+        "remaining_pause_cycles": 1
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@ function setup() {
   writeFileSync(file, before);
   const project = new Project({ compilerOptions: { strict: true, types: [] } });
   project.addSourceFileAtPath(file);
-  const result: MigrationResult = { status: 'verified', changes: [], diagnostics: [], issues: [], llmAttempts: 0,
+  const result: MigrationResult = { status: 'verified', changes: [], diagnostics: [], issues: [], llmAttempts: 0, evidence: [],
     files: [{ path: file, before, after: 'export const count: number = 2;' }] };
   return { root, file, before, project, result };
 }

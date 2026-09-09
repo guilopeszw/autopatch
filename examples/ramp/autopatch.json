@@ -1,0 +1,6 @@
+{
+  "from": "examples/ramp/baseline.json",
+  "to": "examples/ramp/target.json",
+  "project": "examples/ramp/project/tsconfig.json",
+  "bindings": "examples/ramp/project/bindings.json"
+}
