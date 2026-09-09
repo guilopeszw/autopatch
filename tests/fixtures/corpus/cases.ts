@@ -117,3 +117,16 @@ corpus.push({
   bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'unknown' } } } },
   expected: { status: 'blocked', reason: 'Configured default for region does not satisfy' },
 });
+
+corpus.push({
+  id: 'computed-key-preserves-supplied-value',
+  description: 'Reject default insertion when a dynamic key could already supply that field.',
+  before: objectDoc({ id: { type: 'string' }, region: { type: 'string' } }),
+  after: objectDoc({ id: { type: 'string' }, region: { type: 'string' } }, ['id', 'region']),
+  files: {
+    '/sdk.ts': 'export interface Input { id: string; region?: string } export function submit(input: Input) { return input.region; }',
+    '/consumer.ts': 'import { submit, type Input } from "./sdk.js"; const key: string = "region"; const input: Input = { id: "1", [key]: "us" }; export const result = submit(input);',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'eu' } } } },
+  expected: { status: 'blocked', reason: 'Cannot infer missing region through a computed property' },
+});

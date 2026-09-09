@@ -136,6 +136,11 @@ function insertConfiguredDefault(declaration: InterfaceDeclaration, name: string
   for (const object of objects) {
     if (object.getType().getProperty(name)) continue;
     if (object.getProperties().some(Node.isSpreadAssignment)) throw new Error(`Cannot infer missing ${name} through a spread`);
+    // ponytail: block computed names when the field is not statically present;
+    // constant-key collision analysis can relax this conservative guard later.
+    if (object.getProperties().some((member) => member.getFirstChildByKind(ts.SyntaxKind.ComputedPropertyName))) {
+      throw new Error(`Cannot infer missing ${name} through a computed property`);
+    }
     // Computed keys preserve JSON semantics even for a key named __proto__.
     object.addPropertyAssignment({ name: `[${JSON.stringify(name)}]`, initializer: literal });
   }
