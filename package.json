@@ -10,7 +10,8 @@
   "scripts": {
     "autopatch": "tsx bin/autopatch.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsx scripts/typecheck.ts"
   },
   "dependencies": {
     "commander": "15.0.0",
