@@ -11,6 +11,7 @@
     "autopatch": "tsx bin/autopatch.ts",
     "test": "vitest run --testTimeout=15000",
     "test:watch": "vitest --testTimeout=15000",
+    "test:integration": "vitest run tests/generated-sdk.test.ts --testTimeout=30000 --reporter=verbose",
     "typecheck": "tsx scripts/typecheck.ts",
     "evaluate": "tsx scripts/evaluate.ts",
     "smoke:llm": "node --env-file-if-exists=.env.local --import tsx bin/autopatch.ts --from tests/fixtures/live/v1.json --to tests/fixtures/live/v2.json --project tests/fixtures/live/tsconfig.json --bindings tests/fixtures/live/bindings.json --max-attempts 1 --timeout-ms 30000 --dry-run --json",

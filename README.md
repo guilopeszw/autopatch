@@ -19,6 +19,7 @@ npm run typecheck   # native compiler diagnostics in memory; no shell tsc
 npm test           # real AST projects, filesystem transactions, and CLI tests
 npm run demo       # verified preview against the included fixture; no writes
 npm run evaluate   # offline corpus: runtime observations and expected rejections
+npm run test:integration # pinned Orval SDK, CLI writes, real loopback HTTP
 ```
 
 The demo migrates `createUser` → `registerUser` and `CreateUser.name` →
@@ -265,3 +266,8 @@ reproductions and their resolutions.
 See the [evaluation protocol](docs/evaluation.md) for the measured denominator,
 case matrix and limitations, and the [submission walkthrough](docs/submission.md)
 for a short demonstration and opt-in provider check.
+
+The [Orval integration fixture](tests/fixtures/orval/README.md) adds independent
+generated-client evidence: exact upstream files at a pinned release, verified
+hashes, and preserved HTTP observations across a CLI migration. It is counted
+separately from the repository-authored corpus.

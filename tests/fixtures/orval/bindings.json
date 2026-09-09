@@ -1,0 +1,4 @@
+{
+  "operations": { "listPets": { "file": "upstream/app/gen/pets/pets.ts", "export": "listPets" } },
+  "schemas": {}
+}

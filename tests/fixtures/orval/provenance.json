@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/orval-labs/orval",
+  "release": "v8.30.0",
+  "commit": "fd3c00d363981267f9a0f5625683ae3d40ad4ff4",
+  "sourceDirectory": "samples/next-app-with-fetch/",
+  "files": {
+    "upstream/app/gen/pets/pets.ts": "e173958c7cbfe89447f1654d1b8e9122ecce2578fc64984724db17e83c7b3e84",
+    "upstream/custom-fetch.ts": "9215520d2f4d00cb0fec401bf25e7679b83fdd2d255614c8f51a9210d8370e55",
+    "upstream/petstore.yaml": "b67141a12bd3d88fd96723082016b8207aa541ddd70369eec143d89ca1262bb3",
+    "upstream/orval.config.ts": "d2cf1336efa357ba0b8358be482d629181fd5461d3acae3355d2068b1236668f",
+    "upstream/app/gen/models/cat.ts": "ec086cdf4ac676bc10b6ac3490831489cb6b9032edcd71ced5f600258eaf4759",
+    "upstream/app/gen/models/catType.ts": "43a7dd12e3eae7ddbb0bf48522c9940aefd857d290411baad162a6dbc1679f7a",
+    "upstream/app/gen/models/createPetsBodyItem.ts": "53231559a9bf3c765769356df2f4a40210f4242a1c8758dafae714d7a6d5ed75",
+    "upstream/app/gen/models/dachshund.ts": "1a32ab068dfd9a0666a31f6d7be7de8dcc0fbd256bd952a1a70db442c43469dd",
+    "upstream/app/gen/models/dachshundBreed.ts": "db8c35c1a68f4a3ff44cac5f9917936740926b17fb84305f2891bed67e18b0f9",
+    "upstream/app/gen/models/dog.ts": "b1bd8c80774ed834d8073a9fde97af7e0c2e233f7e29e871c38c7e86e1ed010d",
+    "upstream/app/gen/models/dogType.ts": "6e4fc2ffa0cf783fd0e04f5ce4815cd83eb692e31485174ffeaa40e69e0a482a",
+    "upstream/app/gen/models/error.ts": "22d2a6e9a48d2be99533129760c97b908a222f40e018b06057f83ba92fca5d93",
+    "upstream/app/gen/models/index.ts": "b70617868adeeaffbd9daff553bc540f4a4c4be21f01607ebf195555fbd75d49",
+    "upstream/app/gen/models/labradoodle.ts": "a03860a86be1020e46184a68dd88de8721219fff1c55efbbf40611769e85b579",
+    "upstream/app/gen/models/labradoodleBreed.ts": "f428fb73ce154e0a0df2183db7fb2065cf7113e8150f4dc7c4f683f59c473684",
+    "upstream/app/gen/models/listPetsParams.ts": "b0ae74ef9229253f65f7d9308947c4408522e34e06100be85c645caa8bab2dfc",
+    "upstream/app/gen/models/pet.ts": "fa99938b143af6431ea4181ee0e9626bb264d6787e613272e15dc5f12947adc5",
+    "upstream/app/gen/models/petCallingCode.ts": "b6f31c3ae06fce5b149ca72390bf535c4c952d69d174eb774ca1361bc900749a",
+    "upstream/app/gen/models/petCountry.ts": "a440d8230a514809b52d5269638c70954f708e7d4bb696c9fc07250d3b70d948",
+    "upstream/app/gen/models/pets.ts": "5b62fc23b9a014cdb878a98a8ac65ff3b54c44ae5206f588ab4914f1f794942d",
+    "upstream/LICENSE": "a8e153aafa1d73e70356ffaed4b1699a324c022b4ac4be9c3bdc385c96d52a20"
+  }
+}
