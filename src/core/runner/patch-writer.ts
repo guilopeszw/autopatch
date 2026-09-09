@@ -22,7 +22,7 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
   const lock = fs.openSync(lockPath, "wx", 0o600);
   const originals = new Map(project.getSourceFiles().map((source) => [source, source.getFullText()]));
   const compilerOptions = project.getCompilerOptions();
-  const staged: { path: string; temporary: string; backup: string; applied: boolean; preserveBackup: boolean }[] = [];
+  const staged: { before: string; after: string; path: string; temporary: string; backup: string; applied: boolean; preserveBackup: boolean }[] = [];
   let committed = false;
   try {
     const seen = new Set<string>();
@@ -49,13 +49,14 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
     for (const patch of result.files) {
       const path = fs.realpathSync(patch.path);
       const prefix = join(dirname(path), `.autopatch-${randomUUID()}`);
-      const entry = { path, temporary: `${prefix}.tmp`, backup: `${prefix}.bak`, applied: false, preserveBackup: false };
+      const entry = { path, before: patch.before, after: patch.after, temporary: `${prefix}.tmp`, backup: `${prefix}.bak`, applied: false, preserveBackup: false };
       staged.push(entry);
       const mode = fs.statSync(path).mode & 0o777;
       fs.writeFileSync(entry.temporary, patch.after, { flag: "wx", mode });
       fs.writeFileSync(entry.backup, patch.before, { flag: "wx", mode });
     }
     for (const entry of staged) {
+      if (fs.readFileSync(entry.path, "utf8") !== entry.before) throw new Error(`File changed before replacement: ${entry.path}`);
       fs.renameSync(entry.temporary, entry.path);
       entry.applied = true;
     }
@@ -64,7 +65,10 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
     const recoveryErrors: string[] = [];
     for (const entry of [...staged].reverse()) {
       if (!entry.applied) continue;
-      try { fs.renameSync(entry.backup, entry.path); }
+      try {
+        if (fs.readFileSync(entry.path, "utf8") !== entry.after) throw new Error("Concurrent edit during rollback");
+        fs.renameSync(entry.backup, entry.path);
+      }
       catch {
         entry.preserveBackup = true;
         recoveryErrors.push(`Restore ${entry.path} from ${entry.backup}`);
