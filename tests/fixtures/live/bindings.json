@@ -1,0 +1,4 @@
+{
+  "operations": { "submit": { "file": "api.ts", "export": "submit" } },
+  "schemas": { "Input": { "file": "api.ts", "export": "Input" } }
+}

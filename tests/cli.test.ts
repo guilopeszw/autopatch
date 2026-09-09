@@ -1,11 +1,15 @@
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { runCli } from '../src/cli.js';
 
 const roots: string[] = [];
-afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'autopatch-cli-'));
   roots.push(root);
@@ -64,4 +68,29 @@ test('reads explicit required-field values from bindings and preserves supplied 
   const migrated = readFileSync(join(root, 'consumer.ts'), 'utf8');
   expect(migrated).toContain('["region"]: "eu"');
   expect(migrated).toContain('region: "us"');
+});
+
+test('runs the live smoke fixture through the CLI with only external HTTP replaced', async () => {
+  vi.stubEnv('OPENAI_API_KEY', 'test-key-not-a-credential');
+  const http = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+    status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'submit({ count: 3 })' }] }],
+  }), { status: 200 }));
+  const root = resolve('tests/fixtures/live');
+  let output = '';
+  const code = await runCli(['--from', join(root, 'v1.json'), '--to', join(root, 'v2.json'),
+    '--project', join(root, 'tsconfig.json'), '--bindings', join(root, 'bindings.json'),
+    '--llm', 'openai', '--model', 'test-model', '--max-attempts', '1', '--dry-run', '--json'],
+  { out: text => { output += text; }, err: () => {} });
+  expect(code, output).toBe(0);
+  expect(JSON.parse(output)).toMatchObject({ status: 'verified', written: false, llmAttempts: 1, diagnostics: [] });
+  expect(http).toHaveBeenCalledTimes(1);
+  const body = JSON.parse(String(http.mock.calls[0]?.[1]?.body));
+  expect(JSON.parse(body.input)).toEqual({
+    snippet: 'submit({ count: "3" })',
+    changes: [{ kind: 'property-updated', schema: 'Input', property: 'count',
+      before: { schema: { type: 'string' }, required: true },
+      after: { schema: { type: 'number' }, required: true } }],
+  });
+  expect(body.input).not.toContain('unrelatedContext');
+  expect(readFileSync(join(root, 'consumer.ts'), 'utf8')).toContain('submit({ count: "3" })');
 });

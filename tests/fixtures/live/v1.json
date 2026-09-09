@@ -1,0 +1,9 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Isolated repair smoke", "version": "1" },
+  "paths": {},
+  "components": { "schemas": { "Input": {
+    "type": "object", "required": ["count"],
+    "properties": { "count": { "type": "string" } }
+  } } }
+}
