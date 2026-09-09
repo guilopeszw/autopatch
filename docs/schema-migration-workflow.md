@@ -46,7 +46,7 @@ The output directory must be new, its parent must exist, and it must be outside
 the repository. Inputs must be tracked files with no symlinks. The command uses
 the actual CLI to plan and export `review.html` and `result.json`, then checks
 that each proposed source edit is tracked, revalidates with the standard writer,
-advances the schema baseline, and stages exactly those paths. It also writes
+advances the schema baseline and renamed operation bindings, and stages exactly those paths. It also writes
 `manifest.json` and `body.md`. It never pushes or opens a PR on its own.
 
 Exit 0 means `ready` or `noop`; exit 1 means compiler/contract blocking; exit 2
@@ -71,7 +71,9 @@ finds and links an existing PR, including closed PRs, instead of duplicating it.
 It never force-pushes. A branch left without a PR after an interrupted run causes
 an explicit failure for inspection. Different source commits can produce separate
 PRs; review or close superseded PRs manually. Baseline advancement makes the same
-target a no-op after its migration is merged.
+target a no-op after its migration is merged. Updating operation keys and exports
+also keeps the next operation rename bound to the correct declaration. Configured
+property defaults should be reviewed when renaming or changing their contracts.
 
 HTML and JSON artifacts are attached to the private workflow run for seven days.
 PR bodies link to that run. GitHub may require human approval before running PR

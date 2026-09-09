@@ -26,10 +26,11 @@ test('prepares only verified tracked edits and advances the baseline in a dispos
     await execute(process.execPath, ['--import', tsxLoader, entrypoint,
       '--config', 'autopatch.json', '--output', output], { cwd: root, timeout: 25_000 });
     expect(JSON.parse(readFileSync(join(output, 'manifest.json'), 'utf8'))).toMatchObject({
-      status: 'ready', files: ['api.ts', 'baseline.json', 'consumer.ts'],
+      status: 'ready', files: ['api.ts', 'baseline.json', 'bindings.json', 'consumer.ts'],
     });
     expect(readFileSync(join(root, 'baseline.json'), 'utf8')).toBe(readFileSync(join(root, 'target.json'), 'utf8'));
-    expect((await git('diff', '--cached', '--name-only')).stdout.trim().split('\n')).toEqual(['api.ts', 'baseline.json', 'consumer.ts']);
+    expect((await git('diff', '--cached', '--name-only')).stdout.trim().split('\n')).toEqual(['api.ts', 'baseline.json', 'bindings.json', 'consumer.ts']);
+    expect(JSON.parse(readFileSync(join(root, 'bindings.json'), 'utf8')).operations).toEqual({ registerUser: { file: 'api.ts', export: 'registerUser' } });
     expect(readFileSync(join(output, 'review.html'), 'utf8')).toContain('Verified migration plan');
     expect(readFileSync(join(output, 'body.md'), 'utf8')).toContain('zero compiler errors');
     // After the generated commit lands, the same target must not generate a new PR.
@@ -39,6 +40,15 @@ test('prepares only verified tracked edits and advances the baseline in a dispos
       '--config', 'autopatch.json', '--output', second], { cwd: root, timeout: 25_000 });
     expect(JSON.parse(readFileSync(join(second, 'manifest.json'), 'utf8'))).toMatchObject({ status: 'noop', files: [] });
     expect((await git('status', '--porcelain')).stdout).toBe('');
+    const nextTarget = JSON.parse(readFileSync(join(root, 'target.json'), 'utf8'));
+    nextTarget.paths['/users'].post.operationId = 'enrollUser';
+    writeFileSync(join(root, 'target.json'), JSON.stringify(nextTarget));
+    await git('add', 'target.json');
+    await git('-c', 'user.name=AutoPatch test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'test: publish next target');
+    await execute(process.execPath, ['--import', tsxLoader, entrypoint,
+      '--config', 'autopatch.json', '--output', join(artifacts, 'third')], { cwd: root, timeout: 25_000 });
+    expect(readFileSync(join(root, 'api.ts'), 'utf8')).toContain('function enrollUser');
+    expect(JSON.parse(readFileSync(join(root, 'bindings.json'), 'utf8')).operations).toEqual({ enrollUser: { file: 'api.ts', export: 'enrollUser' } });
   } finally { rmSync(root, { recursive: true, force: true }); rmSync(artifacts, { recursive: true, force: true }); }
 }, 40_000);
 

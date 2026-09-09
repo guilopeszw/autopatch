@@ -44,7 +44,7 @@ try {
   const values = config as Record<string, unknown>;
   const from = inputPath(values.from), to = inputPath(values.to), project = inputPath(values.project), bindings = inputPath(values.bindings);
   if (from === to) throw new Error("Baseline and target must be different files");
-  const baseline = readFileSync(from, "utf8"), target = readFileSync(to, "utf8");
+  const baseline = readFileSync(from, "utf8"), target = readFileSync(to, "utf8"), originalBindings = readFileSync(bindings, "utf8");
   const destination = resolve(options.output);
   const output = join(realpathSync(dirname(destination)), basename(destination));
   if (!outside(output)) throw new Error("Artifact directory must be outside the repository");
@@ -66,7 +66,23 @@ try {
     const result = JSON.parse(json) as MigrationResult;
     const files = result.files.map(file => localPath(file.path));
     for (const path of files) if (!tracked.has(path)) throw new Error(`Refusing to stage an untracked source: ${path}`);
-    if (readFileSync(from, "utf8") !== baseline || readFileSync(to, "utf8") !== target) throw new Error("Schemas changed during planning");
+    // The CLI has validated this document. Advance operation keys and exported
+    // declaration names with the code; otherwise the next schema diff is unbound.
+    const nextBindings = JSON.parse(originalBindings) as { operations?: Record<string, { file: string; export: string }> };
+    const names = new Set<string>();
+    let bindingsChanged = false;
+    const operations = Object.entries(nextBindings.operations ?? {}).map(([id, binding]) => {
+      const rename = result.changes.find(change => change.kind === "operation-renamed" && change.from === id);
+      const name = rename?.kind === "operation-renamed" ? rename.to : id;
+      if (names.has(name)) throw new Error(`Operation binding collision: ${name}`);
+      names.add(name);
+      if (name !== id) bindingsChanged = true;
+      return [name, name === id ? binding : { ...binding, export: name }];
+    });
+    if (bindingsChanged) nextBindings.operations = Object.fromEntries(operations);
+    if (readFileSync(from, "utf8") !== baseline || readFileSync(to, "utf8") !== target || readFileSync(bindings, "utf8") !== originalBindings) {
+      throw new Error("Schemas or bindings changed during planning");
+    }
     const warnings = writeVerifiedPatch(new Project({ tsConfigFilePath: project }), result, dirname(project));
     // Baseline advancement and source changes are staged in the same Git commit.
     // A disk error fails this command; callers must discard this disposable
@@ -74,6 +90,10 @@ try {
     if (baseline !== target) {
       writeFileSync(from, target);
       files.push(localPath(from));
+    }
+    if (bindingsChanged) {
+      writeFileSync(bindings, `${JSON.stringify(nextBindings, null, 2)}\n`);
+      files.push(localPath(bindings));
     }
     files.sort();
     if (files.length) git("add", "--", ...files);
