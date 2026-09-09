@@ -1,40 +1,17 @@
-# Reviewable, provider-independent migrations
+# GitHub migration workflow
 
-## Accepted scope
+When a checked-in target schema changes, the workflow runs AutoPatch and opens a
+**draft PR** containing verified source edits, an updated schema baseline, and
+review evidence. Blocked migrations produce findings without a source commit.
 
-The user accepted the recommendation to add a real API release case, then a
-GitHub migration workflow and a small review UI. They clarified that the MVP
-should demonstrate more providers, including Brex and Ramp. Existing requirements
-remain: AST codemods, in-memory compiler verification, isolated optional LLM
-context, tests, documentation, atomic Conventional Commits, and pull requests.
-
-The subsequent product decision is subscription billing: Stripe, Paddle,
-Chargebee, and Recurly are the primary examples. Brex and Ramp remain secondary
-evidence. This focus does not claim complete provider API coverage.
-
-- Preserve the generic engine; provider names belong in evidence and configuration.
-- Demonstrate a published Stripe release change and an important safe failure.
-- Exercise Brex and Ramp's published contracts, clearly labeling authored adapter
-  baselines separately from historical release evidence.
-- Export a review UI from real results: schema changes, bound symbols, exact
-  source changes, compiler findings, and honest deterministic/LLM provenance.
-- A checked-in schema update prepares verified source edits and opens a draft PR.
-- Blocked runs expose findings without a writable patch or a source commit.
-- Keep review artifacts with the repository; use no new hosted service. The owner
-  subsequently chose public MVP distribution for committee access.
-
-Live provider-model validation still needs a configured key and model. Slack is
-a later notification layer. Adding more financial API providers does not mean
-performing financial operations or claiming complete SDK compatibility.
-
-## Run the workflow
+## Setup and inputs
 
 `.github/workflows/autopatch.yml` runs on a main-branch change to an example's
 `target.json` or `autopatch.json`, and through **Actions → AutoPatch migrations →
 Run workflow**. It runs Stripe, Paddle, Chargebee, and Recurly independently. Source schemas are
 checked in; the workflow does not poll upstream URLs. The initial examples
 intentionally have pending migrations, so the first run can produce four PRs.
-Provider evidence and limitations are linked in `examples/README.md`.
+See [provider scope](../examples/README.md) and [observed draft PRs](delivery-evidence.md).
 
 Each `examples/<provider>/autopatch.json` maps four repository-relative paths:
 `from` (recorded baseline), `to` (desired target), `project` (tsconfig), and
