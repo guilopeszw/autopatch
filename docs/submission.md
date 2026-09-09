@@ -1,5 +1,10 @@
 # Puentes walkthrough
 
+Start with the [subscription-billing pitch and three-minute demo](puentes-pitch.md).
+It connects the real Stripe release case, four-provider scope, review UI, and
+failure boundaries to the product claim. The commands below provide the broader
+engineering walkthrough.
+
 Use Node 24. Install once with `npm ci`, then run:
 
 ```sh
