@@ -1,5 +1,8 @@
 # AutoPatch
 
+[Three-minute demo](https://github.com/guilopeszw/autopatch/releases/download/submission-billing-2026-09-09-rc2/demo.mp4)
+· [Puentes evaluation bundle](https://github.com/guilopeszw/autopatch/releases/download/submission-billing-2026-09-09-rc2/submission.zip)
+
 AutoPatch maintains TypeScript integrations with subscription-billing APIs,
 turning supported contract changes into reviewable, compiler-verified patches.
 The primary examples cover [Stripe, Paddle, Chargebee, and Recurly](examples/README.md);
