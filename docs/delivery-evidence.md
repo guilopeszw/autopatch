@@ -27,5 +27,6 @@ request was involved. The demo PRs are intentionally not merged.
 
 Artifacts expire after seven days under the workflow retention setting. The
 submission bundle keeps a copy of the original run's artifacts and metadata.
-Access to the repository, PRs, and run still requires a GitHub identity with
-permission to view this private repository.
+The MVP repository and PRs are public for committee review. GitHub may require
+sign-in for Actions artifact downloads; the release bundle provides the preserved
+evidence separately.
