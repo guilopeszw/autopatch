@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Paddle API",
-    "version": "authored-adapter-baseline"
+    "version": "1.0"
   },
   "paths": {},
   "components": {
@@ -11,7 +11,8 @@
         "type": "object",
         "required": [
           "id",
-          "cancel_subscription"
+          "cancel_subscription",
+          "update_subscription_payment_method"
         ],
         "properties": {
           "id": {
@@ -27,6 +28,13 @@
             "description": "Link to the page for this subscription in the customer portal with the subscription cancellation form pre-opened. Use as part of cancel subscription workflows.",
             "examples": [
               "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=cancel_subscription&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
+            ]
+          },
+          "update_subscription_payment_method": {
+            "type": "string",
+            "description": "Link to the page for this subscription in the customer portal with the payment method update form pre-opened. Use as part of workflows to let customers update their payment details.\n\nIf a manually-collected subscription, opens the overview page for this subscription.",
+            "examples": [
+              "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=update_subscription_payment_method&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
             ]
           }
         },
