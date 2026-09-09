@@ -78,6 +78,7 @@ live validation is pending until credentials and model configuration are supplie
 
 ## Submission access
 
-The repository is private. Confirm the committee's GitHub identities and grant
-them access before submission. Keep subsequent work in focused Conventional
-Commits and review it through pull requests.
+The completed MVP is published as a public repository so the committee can
+inspect the source, PRs, and tagged submission without individual invitations.
+Use the frozen release and its checksums for evaluation. Keep subsequent work in
+focused Conventional Commits and review it through pull requests.
