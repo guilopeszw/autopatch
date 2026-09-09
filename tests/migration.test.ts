@@ -48,8 +48,11 @@ test("does not let noCheck or skipLibCheck hide baseline errors", async () => {
   expect(project.getCompilerOptions().noCheck).toBe(true);
 });
 
-test("repairs affected bound calls as a batch while keeping all other source out of model context", async () => {
+test.each(['function declaration', 'arrow variable'])("repairs bound %s calls as a batch while keeping all other source out of model context", async (shape) => {
   const { project, bindings, schema } = setup();
+  if (shape === 'arrow variable') project.getSourceFileOrThrow('/api.ts').replaceWithText(
+    'export interface Input { count: string }\nexport const submit = (input: Input): void => { void input; };',
+  );
   project.getSourceFileOrThrow('/consumer.ts').addStatements('submit({ count: "4" });');
   project.createSourceFile('/secret.ts', 'export const secret = "not-model-context";');
   const requests: string[] = [];

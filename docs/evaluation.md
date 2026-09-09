@@ -4,9 +4,9 @@ Run `npm run evaluate` for the readable report or `npm run evaluate -- --json`
 for per-case results and literal runtime observations. Exit 1 means an expectation
 failed. No provider is configured on this path, and CI runs it without API keys.
 
-The corpus contains **17 curated cases: 9 completed migrations, 8 expected
-rejections, 17 passing expectations, and 0 LLM requests**. The completed-migration
-fraction is **9/17 (52.9%)** across this deliberately mixed acceptance/rejection
+The corpus contains **18 curated cases: 10 completed migrations, 8 expected
+rejections, 18 passing expectations, and 0 LLM requests**. The completed-migration
+fraction is **10/18 (55.6%)** across this deliberately mixed acceptance/rejection
 set. Safe rejection counts toward correctness, never toward migration coverage.
 These small, repository-authored examples do not establish the mission's 90%
 production coverage target or represent a sampled population of real projects.
@@ -14,6 +14,7 @@ production coverage target or represent a sampled population of real projects.
 | Case | Expected behavior | Runtime observation |
 | --- | --- | --- |
 | Operation rename through a barrel and import alias | Complete | `person:42` preserved |
+| Exported arrow operation through a barrel and alias | Complete | `person:42` preserved |
 | Optional property, shorthand and destructuring | Complete | `Ada` preserved |
 | Typed response property rename | Complete | `Ada` preserved |
 | Optional property addition | Complete | `Ada` preserved |
