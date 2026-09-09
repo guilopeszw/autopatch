@@ -14,11 +14,11 @@ errors, zero LLM rounds. Show `npm run demo -- --json` to inspect exact source
 edits. It renames an operation through an import alias and renames a request
 property while preserving the local shorthand variable.
 
-The evaluation report distinguishes seven completed migrations from five safe
+The evaluation report distinguishes eight completed migrations from seven safe
 rejections. It checks literal runtime observations as well as compiler diagnostics.
 For structured output, use `npm run evaluate -- --json`. The denominator and
-limitations are in [evaluation.md](evaluation.md); do not present 12 passing
-expectations as 12 completed migrations or claim 90% production coverage.
+limitations are in [evaluation.md](evaluation.md); do not present 15 passing
+expectations as 15 completed migrations or claim 90% production coverage.
 
 ## Code to inspect
 

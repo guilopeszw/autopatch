@@ -4,9 +4,9 @@ Run `npm run evaluate` for the readable report or `npm run evaluate -- --json`
 for per-case results and literal runtime observations. Exit 1 means an expectation
 failed. No provider is configured on this path, and CI runs it without API keys.
 
-The initial corpus contains **12 curated cases: 7 completed migrations, 5 expected
-rejections, 12 passing expectations, and 0 LLM requests**. The completed-migration
-fraction is **7/12 (58.3%)** across this deliberately mixed acceptance/rejection
+The initial corpus contains **15 curated cases: 8 completed migrations, 7 expected
+rejections, 15 passing expectations, and 0 LLM requests**. The completed-migration
+fraction is **8/15 (53.3%)** across this deliberately mixed acceptance/rejection
 set. Safe rejection counts toward correctness, never toward migration coverage.
 These small, repository-authored examples do not establish the mission's 90%
 production coverage target or represent a sampled population of real projects.
@@ -20,11 +20,14 @@ production coverage target or represent a sampled population of real projects.
 | Requiredness tightened with an existing value | Complete | `Ada` preserved |
 | Scalar enum widened | Complete | `active` preserved |
 | Required field with a configured value | Complete | Serialized request gains `region: "eu"` |
+| Multiple configured required fields | Complete | Serialized request gains `region` and `zone` |
 | Required field without a business value | Reject | Compiler errors; no patch |
 | Incompatible property type | Reject | Compiler errors; no patch |
 | Inferred optional producer from PR #1 review | Reject | Structural rename cannot be proven |
 | Removed operation | Reject | Unsupported contract change |
 | Invalid configured enum value | Reject | Value fails the destination type |
+| Dynamic computed property | Reject | An inserted default could overwrite a supplied value |
+| Fractional default for an integer field | Reject | Known value violates the integer constraint |
 
 ## What is checked
 

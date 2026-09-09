@@ -115,10 +115,11 @@ binding, for example:
 These are operator-provided migration values, independent of OpenAPI's `default`
 keyword. AutoPatch checks each against the destination TypeScript type, inserts
 it through AST property assignments, and preserves existing fields. Values must
-be finite JSON scalars. Insertion requires a direct contextual reference to the
-bound interface; ambiguous spreads and unsupported producers require manual work.
-This also applies to a field becoming required. TypeScript models OpenAPI integers
-as `number`; it does not validate integer/range constraints at runtime.
+be finite JSON scalars; configured integer values must also be whole numbers.
+Insertion requires a direct contextual reference to the bound interface; ambiguous
+spreads, computed keys and unsupported producers require manual work. This also
+applies to a field becoming required. TypeScript models OpenAPI integers as
+`number`; it does not validate arbitrary runtime inputs for integer/range constraints.
 
 The supported input format is OpenAPI **3.0.x / 3.1.x JSON**. This is a focused
 migration parser, not a complete OpenAPI validator or SDK generator. Endpoint
