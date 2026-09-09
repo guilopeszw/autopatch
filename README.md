@@ -132,11 +132,12 @@ unrecognized differences are handled conservatively.
 ## Bind a local SDK
 
 Paths in the bindings file are relative to the target tsconfig directory.
-Operation bindings identify local exported function declarations or variables with
-an arrow-function initializer, such as `export const createUser = (input: Input) =>
+Operation bindings identify local exported function declarations or directly
+exported variables with an arrow-function initializer, such as `export const createUser = (input: Input) =>
 input.id`. Schema bindings identify exported interface declarations. Bindings refer
-to the **old** revision. Factory-created functions, function expressions, re-export
-aliases used as the binding itself, and class methods are not resolved as operation
+to the **old** revision. Separate export lists for arrow variables, factory-created
+functions, function expressions, re-export aliases used as the binding itself,
+and class methods are not resolved as operation
 bindings; bind the supported declaration in its defining SDK file.
 
 ```json
