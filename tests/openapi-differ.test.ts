@@ -52,3 +52,13 @@ test("treats explicit default additionalProperties as unchanged while retaining 
   expect(diffOpenApi(before, document({ type: "object", additionalProperties: false, properties: { status: { type: "string" } } })))
     .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
 });
+
+test("does not erase additionalProperties changes that affect unevaluated properties", () => {
+  const closed = { type: "object", properties: { name: { type: "string" } }, unevaluatedProperties: false };
+  // In OAS 3.1, explicit true marks extra fields evaluated, bypassing this restriction.
+  const open = { ...closed, additionalProperties: true };
+  expect(diffOpenApi(document(open), document(closed)))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+  expect(diffOpenApi(document(closed), document(open)))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+});

@@ -150,9 +150,10 @@ export function diffOpenApi(before: unknown, after: unknown): SchemaChange[] {
 }
 
 const metadata = ["description", "title", "example", "examples", "deprecated", "x-autopatch-previous-name"];
-/** OAS 3.0/3.1 allow additional properties by default; false and schema constraints remain significant. */
+/** Normalize the default only for plain objects; other keywords can depend on evaluated-property annotations. */
 function schemaConstraints(schema: ObjectValue): ObjectValue {
-  return omit(schema, ["properties", "required", ...metadata, ...(schema.additionalProperties === true ? ["additionalProperties"] : [])]);
+  const plain = Object.keys(schema).every(key => ["type", "properties", "required", "additionalProperties", ...metadata].includes(key));
+  return omit(schema, ["properties", "required", ...metadata, ...(plain && schema.additionalProperties === true ? ["additionalProperties"] : [])]);
 }
 function omit(value: ObjectValue, keys: readonly string[]): ObjectValue {
   return Object.fromEntries(Object.entries(value).filter(([key]) => !keys.includes(key)));
