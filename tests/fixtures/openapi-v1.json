@@ -1,0 +1,25 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "People API", "version": "1.0.0" },
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUser" } } }
+        },
+        "responses": { "200": { "description": "Created" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateUser": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "People API", "version": "2.0.0" },
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateUser" } } }
+        },
+        "responses": { "200": { "description": "Created" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateUser": {
+        "type": "object",
+        "required": ["displayName"],
+        "properties": {
+          "displayName": { "type": "string", "x-autopatch-previous-name": "name" }
+        }
+      }
+    }
+  }
+}

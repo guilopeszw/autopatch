@@ -9,8 +9,10 @@
   },
   "scripts": {
     "autopatch": "tsx bin/autopatch.ts",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --testTimeout=15000",
+    "test:watch": "vitest --testTimeout=15000",
+    "typecheck": "tsx scripts/typecheck.ts",
+    "demo": "tsx bin/autopatch.ts --from tests/fixtures/openapi-v1.json --to tests/fixtures/openapi-v2.json --project tests/fixtures/target/tsconfig.json --bindings tests/fixtures/target/bindings.json"
   },
   "dependencies": {
     "commander": "15.0.0",

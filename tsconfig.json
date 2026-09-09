@@ -15,6 +15,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["bin/**/*.ts", "src/**/*.ts", "tests/**/*.test.ts"],
+  "include": ["bin/**/*.ts", "src/**/*.ts", "scripts/**/*.ts", "tests/**/*.test.ts"],
   "exclude": ["node_modules", "tests/fixtures"]
 }
