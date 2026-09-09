@@ -2,7 +2,7 @@
   "name": "autopatch",
   "version": "0.1.0",
   "private": true,
-  "description": "Compiler-verified TypeScript patches for subscription billing API changes.",
+  "description": "Automated billing API patches.",
   "type": "module",
   "engines": {
     "node": ">=24.0.0 <25"
@@ -15,11 +15,13 @@
     "typecheck": "tsx scripts/typecheck.ts",
     "evaluate": "tsx scripts/evaluate.ts",
     "smoke:llm": "node --env-file-if-exists=.env.local --import tsx bin/autopatch.ts --from tests/fixtures/live/v1.json --to tests/fixtures/live/v2.json --project tests/fixtures/live/tsconfig.json --bindings tests/fixtures/live/bindings.json --max-attempts 1 --timeout-ms 30000 --dry-run --json",
-    "demo": "tsx bin/autopatch.ts --from tests/fixtures/openapi-v1.json --to tests/fixtures/openapi-v2.json --project tests/fixtures/target/tsconfig.json --bindings tests/fixtures/target/bindings.json"
+    "demo": "tsx bin/autopatch.ts --from tests/fixtures/openapi-v1.json --to tests/fixtures/openapi-v2.json --project tests/fixtures/target/tsconfig.json --bindings tests/fixtures/target/bindings.json",
+    "monitor": "tsx scripts/monitor-api.ts"
   },
   "dependencies": {
     "commander": "15.0.0",
-    "ts-morph": "28.0.0"
+    "ts-morph": "28.0.0",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
