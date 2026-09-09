@@ -23,6 +23,8 @@ test('blocks optional-property renames when inferred producer fields escape symb
 });
 
 test.each([
+  'const values = { first: { id: "1", name: "Ada" } }; const typed: Record<string, Input> = values;',
+  'const values = { 0: { id: "1", name: "Ada" } }; const typed: { [key: number]: Input } = values;',
   'const items = [{ id: "1", name: "Ada" }]; const typed: Input[] = items;',
   'const value = { inner: { id: "1", name: "Ada" } }; const typed: { inner: Input } = value;',
   'const producer = () => ({ id: "1", name: "Ada" }); const typed: () => Input = producer;',

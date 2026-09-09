@@ -63,11 +63,21 @@ export function assertRenameSafety(property: PropertySignature): void {
           expected.getTupleElements().forEach((member, index) => {
             const other = actual.getTupleElements()[index] ?? actual.getArrayElementType();
             if (other) inspect(member, other);
+            else if (actual.isAny()) inspect(member, actual);
           });
           return;
         }
         if (expected.getFlags() & (ts.TypeFlags.StringLike | ts.TypeFlags.NumberLike | ts.TypeFlags.BooleanLike |
           ts.TypeFlags.BigIntLike | ts.TypeFlags.ESSymbolLike | ts.TypeFlags.Null | ts.TypeFlags.Undefined | ts.TypeFlags.Void)) return;
+        for (const index of [expected.getStringIndexType(), expected.getNumberIndexType()]) {
+          if (!index) continue;
+          const actualIndex = actual.getStringIndexType() ?? actual.getNumberIndexType();
+          if (actualIndex) inspect(index, actualIndex);
+          if (actual.isAny()) inspect(index, actual);
+          // An inferred object often has concrete keys rather than an index
+          // signature. Those values still flow into Record<string, Input>.
+          for (const field of actual.getProperties()) inspect(index, field.getTypeAtLocation(expression));
+        }
         for (const field of expected.getProperties()) {
           const other = actual.getProperty(field.getName());
           if (other || actual.isAny()) inspect(field.getTypeAtLocation(expression), other?.getTypeAtLocation(expression) ?? actual);
