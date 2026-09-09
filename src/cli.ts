@@ -58,13 +58,14 @@ export async function runCli(args: readonly string[], output: Output = {
     const project = new Project({ tsConfigFilePath: configPath });
     const result = await migrateProject(project, before, after, bindings, migrationOptions);
     let written = false;
+    let warnings: string[] = [];
     if (options.write && result.status === "verified") {
       // Reload config and dependencies so long-running repairs cannot validate
       // persistence against a stale on-disk compiler configuration.
-      writeVerifiedPatch(new Project({ tsConfigFilePath: configPath }), result, root);
+      warnings = writeVerifiedPatch(new Project({ tsConfigFilePath: configPath }), result, root);
       written = result.files.length > 0;
     }
-    output.out(options.json ? `${JSON.stringify({ ...result, written }, null, 2)}\n` : formatReport(result, written));
+    output.out(options.json ? `${JSON.stringify({ ...result, written, warnings }, null, 2)}\n` : formatReport(result, written) + warnings.map((warning) => `Warning: ${warning}\n`).join(""));
     exitCode = result.status === "blocked" || (options.check && result.files.length > 0) ? 1 : 0;
   });
   try {

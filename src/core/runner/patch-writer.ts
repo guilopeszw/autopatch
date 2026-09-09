@@ -14,9 +14,9 @@ import { checkProject } from "./type-checker.js";
  * roll back; process/power failure may leave a lock and recovery copies. A durable
  * journal is required for crash-atomic multi-file transactions.
  */
-export function writeVerifiedPatch(project: Project, result: MigrationResult, root: string): void {
+export function writeVerifiedPatch(project: Project, result: MigrationResult, root: string): string[] {
   if (result.status !== "verified" || result.diagnostics.length || result.issues.length) throw new Error("Only a verified migration can be written");
-  if (!result.files.length) return;
+  if (!result.files.length) return [];
   const realRoot = fs.realpathSync(root);
   const lockPath = join(realRoot, ".autopatch.lock");
   const lock = fs.openSync(lockPath, "wx", 0o600);
@@ -24,6 +24,7 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
   const compilerOptions = project.getCompilerOptions();
   const staged: { before: string; after: string; path: string; temporary: string; backup: string; applied: boolean; preserveBackup: boolean }[] = [];
   let committed = false;
+  const warnings: string[] = [];
   try {
     const seen = new Set<string>();
     for (const patch of result.files) {
@@ -80,11 +81,17 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
     if (!committed) for (const [source, text] of originals) if (source.getFullText() !== text) source.replaceWithText(text);
     project.compilerOptions.reset();
     project.compilerOptions.set(compilerOptions);
+    const cleanup = (path: string) => {
+      try { fs.rmSync(path, { force: true }); }
+      catch { warnings.push(`File cleanup failed; inspect and remove ${path}`); }
+    };
     for (const entry of staged) {
-      fs.rmSync(entry.temporary, { force: true });
-      if (!entry.preserveBackup) fs.rmSync(entry.backup, { force: true });
+      cleanup(entry.temporary);
+      if (!entry.preserveBackup) cleanup(entry.backup);
     }
-    fs.closeSync(lock);
-    fs.rmSync(lockPath, { force: true });
+    try { fs.closeSync(lock); }
+    catch { warnings.push("Lock cleanup failed while closing its file descriptor"); }
+    cleanup(lockPath);
   }
+  return warnings;
 }

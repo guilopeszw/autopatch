@@ -62,3 +62,16 @@ test.each([false, true])('recovers a partial write while preserving concurrent u
   expect(readdirSync(root).filter((name) => name.endsWith('.bak'))).toHaveLength(concurrentEdit ? 1 : 0);
   expect(readdirSync(root)).not.toContain('.autopatch.lock');
 });
+
+test('reports cleanup trouble as a warning after successful writes and still releases the lock', () => {
+  const { root, file, project, result } = setup();
+  const remove = fs.rmSync;
+  vi.spyOn(fs, 'rmSync').mockImplementation((path, options) => {
+    if (String(path).endsWith('.bak')) throw new Error('Simulated cleanup failure');
+    remove(path, options);
+  });
+  const warnings = writeVerifiedPatch(project, result, root);
+  expect(warnings).toEqual([expect.stringContaining('cleanup')]);
+  expect(readFileSync(file, 'utf8')).toBe('export const count: number = 2;');
+  expect(readdirSync(root)).not.toContain('.autopatch.lock');
+});
