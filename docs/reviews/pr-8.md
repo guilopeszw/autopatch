@@ -1,6 +1,6 @@
 # Review: real contracts, reports, and migration PRs
 
-Baseline: frozen submission `01d4194056dc2c3fc9eb1f4b4e1cfc121b9a8428`.
+Baseline: release snapshot `01d4194056dc2c3fc9eb1f4b4e1cfc121b9a8428`.
 Initial reviewed head: `ac24462`. Fix reviewed independently: `3bac14b`.
 Two independent agents reviewed Standards and Spec using the code-review skill.
 

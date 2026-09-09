@@ -1,4 +1,4 @@
-# Evaluation protocol
+# Test evidence
 
 Run `npm run evaluate` for the readable report or `npm run evaluate -- --json`
 for per-case results and literal runtime observations. Exit 1 means an expectation
@@ -8,8 +8,8 @@ The corpus contains **18 curated cases: 10 completed migrations, 8 expected
 rejections, 18 passing expectations, and 0 LLM requests**. The completed-migration
 fraction is **10/18 (55.6%)** across this deliberately mixed acceptance/rejection
 set. Safe rejection counts toward correctness, never toward migration coverage.
-These small, repository-authored examples do not establish the mission's 90%
-production coverage target or represent a sampled population of real projects.
+These authored examples are not a sampled population of real projects; production
+coverage is unmeasured.
 
 | Case | Expected behavior | Runtime observation |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ versioned SDK/client projects before making general coverage claims, and report
 their selection criteria and denominator separately from this curated corpus.
 
 Provider integration is a separate opt-in smoke test described in
-`docs/submission.md`. A stubbed HTTP test establishes request isolation and the
+[the CLI guide](usage.md#check-a-live-provider). A stubbed HTTP test establishes request isolation and the
 compiler gate; it does not establish live model behavior.
 
 ## Independently generated SDK
@@ -71,7 +71,7 @@ from the 18-case authored corpus. It migrates a generated operation through CLI
 preview and verified persistence, then checks actual loopback HTTP observations
 before and after. The generated SDK, adapter and models remain exact upstream
 copies in the repository; only a temporary target is patched. Provenance and
-limits are in `tests/fixtures/orval/README.md`. The API rename target is synthetic;
+limits are in [the Orval fixture](../tests/fixtures/orval/README.md). The API rename target is synthetic;
 the SDK itself is independently generated. No provider request occurs.
 
 ## Real API release case
@@ -110,3 +110,7 @@ exhaustive currency-policy consumer blocks until an owner supplies decisions for
 the new currencies. Count this separately from the earlier authored Paddle
 customer-portal baseline. It is a real contract change with a generated bounded
 client, not a full Paddle upgrade or live payment test.
+
+[Observed draft PR delivery](delivery-evidence.md) records the GitHub workflow run.
+[Customer validation](customer-validation.md) describes the proposed pilot; no
+customer results have been measured.

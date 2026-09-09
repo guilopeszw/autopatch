@@ -1,4 +1,4 @@
-# Review: subscription-billing scope and Puentes presentation
+# Review: subscription-billing scope and documentation
 
 Baseline: `3bac14b`. Reviewed head: `842a3a8`.
 Two independent agents reviewed Standards and Spec using the code-review skill.

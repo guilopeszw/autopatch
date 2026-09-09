@@ -39,6 +39,17 @@ test('exports a readable standalone review report with exact edits while preserv
   expect(readFileSync(join(root, 'consumer.ts'), 'utf8')).toBe(original);
 });
 
+test('shows an up-to-date report when the contract requires no migration', async () => {
+  const { root, args } = fixture();
+  args[args.indexOf('--to') + 1] = resolve('tests/fixtures/openapi-v1.json');
+  const report = join(root, 'unchanged.html');
+  expect(await runCli([...args, '--report', report], { out: () => {}, err: () => {} })).toBe(0);
+  const html = readFileSync(report, 'utf8');
+  expect(html).toContain('Already up to date');
+  expect(html).toContain('No source changes needed');
+  expect(html).not.toContain('Review source edits');
+});
+
 test('renders source as inert text and exports actionable blocked findings', async () => {
   const { root, args } = fixture();
   const consumer = readFileSync(join(root, 'consumer.ts'), 'utf8');

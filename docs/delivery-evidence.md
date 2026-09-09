@@ -26,7 +26,5 @@ are authored. The separate historical Paddle currency case is documented in
 request was involved. The demo PRs are intentionally not merged.
 
 Artifacts expire after seven days under the workflow retention setting. The
-submission bundle keeps a copy of the original run's artifacts and metadata.
-The MVP repository and PRs are public for committee review. GitHub may require
-sign-in for Actions artifact downloads; the release bundle provides the preserved
-evidence separately.
+repository and PR diffs are public; GitHub may require sign-in for Actions
+artifact downloads. The PR links above preserve the proposed source changes.
