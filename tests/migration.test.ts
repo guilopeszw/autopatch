@@ -37,6 +37,18 @@ test("returns a verified patch without changing the caller's project", async () 
   expect(project.getSourceFileOrThrow('/api.ts').getFullText()).toBe(original);
 });
 
+test('records baseline symbol evidence for a schema change, including the actual consumer reference', async () => {
+  const { project, bindings, schema } = setup();
+  project.getSourceFileOrThrow('/consumer.ts').replaceWithText(
+    'import type { Input } from "./api.js";\nexport const value = (input: Input) => input.count;');
+  const result = await migrateProject(project, schema('string'), schema('number'), bindings);
+  expect(result.status).toBe('verified');
+  expect(result.evidence).toEqual([expect.objectContaining({
+    changeIndex: 0, symbol: 'Input.count', declaration: expect.objectContaining({ path: '/api.ts', line: 1 }),
+    references: expect.arrayContaining([expect.objectContaining({ path: '/consumer.ts', line: 2, snippet: 'input.count' })]),
+  })]);
+});
+
 test("does not let noCheck or skipLibCheck hide baseline errors", async () => {
   const { project, bindings, schema } = setup();
   project.compilerOptions.set({ noCheck: true, skipLibCheck: true });

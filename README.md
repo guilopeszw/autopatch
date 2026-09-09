@@ -204,6 +204,7 @@ do not make paid model calls. Live provider quality is not established by them.
 | `--write` | Persist a compiler-verified plan |
 | `--check` | Return 1 when verified edits remain, without writing |
 | `--json` | Structured report with changes, exact files, diagnostics and LLM rounds |
+| `--report <file.html>` | Create a standalone review of the migration plan; destination must not exist |
 | `--llm`, `--model` | Opt-in provider and explicit model ID |
 | `--max-attempts`, `--timeout-ms` | Repair bounds |
 | `--help`, `--version` | CLI metadata |

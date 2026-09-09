@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
 import { Project } from "ts-morph";
@@ -6,11 +6,12 @@ import type { Bindings, SymbolBinding } from "./core/ast/codemod-builder.js";
 import { createRepairTransport } from "./core/agent/providers.js";
 import { migrateProject, type MigrationOptions, type MigrationResult } from "./core/runner/migration.js";
 import { writeVerifiedPatch } from "./core/runner/patch-writer.js";
+import { renderHtmlReport } from "./report/html-report.js";
 
 interface Output { out: (text: string) => void; err: (text: string) => void }
 interface CliOptions {
   from: string; to: string; project: string; bindings: string;
-  write?: boolean; dryRun?: boolean; check?: boolean; json?: boolean;
+  write?: boolean; dryRun?: boolean; check?: boolean; json?: boolean; report?: string;
   llm: "none" | "openai" | "anthropic"; model?: string;
   maxAttempts: number; timeoutMs: number;
 }
@@ -31,6 +32,7 @@ export async function runCli(args: readonly string[], output: Output = {
     .addOption(new Option("--dry-run", "preview only (the default)").conflicts("write"))
     .addOption(new Option("--check", "exit 1 if a verified migration has pending edits").conflicts("write"))
     .option("--json", "emit a machine-readable report including exact before/after source")
+    .option("--report <file.html>", "create a standalone HTML review of the plan (must be a new file)")
     .addOption(new Option("--llm <provider>", "opt in to isolated repair requests").choices(["none", "openai", "anthropic"]).default("none"))
     .option("--model <id>", "explicit provider model ID; required with --llm")
     .option("--max-attempts <number>", "maximum repair rounds (1–5)", integer(1, 5), 2)
@@ -57,6 +59,12 @@ export async function runCli(args: readonly string[], output: Output = {
     } else if (options.model) throw new Error("--model requires an explicit --llm provider");
     const project = new Project({ tsConfigFilePath: configPath });
     const result = await migrateProject(project, before, after, bindings, migrationOptions);
+    if (options.report) {
+      if (!options.report.endsWith(".html")) throw new Error("--report requires a new .html file");
+      // Exclusive creation prevents source/report overwrites. Export before any
+      // persistence so a failed report destination cannot leave a written patch.
+      writeFileSync(resolve(options.report), renderHtmlReport(result, { root, from: options.from, to: options.to }), { flag: "wx", mode: 0o600 });
+    }
     let written = false;
     let warnings: string[] = [];
     if (options.write && result.status === "verified") {

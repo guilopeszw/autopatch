@@ -1,6 +1,7 @@
 import type { CallExpression, Project } from "ts-morph";
 import { applyCodemods, resolveOperation, type Bindings } from "../ast/codemod-builder.js";
 import { findCallSites } from "../ast/callsite-finder.js";
+import { collectChangeEvidence, type ChangeEvidence } from "../ast/change-evidence.js";
 import { repairCallSites, type RepairOptions, type RepairTransport } from "../agent/llm-fixer.js";
 import { diffOpenApi, type SchemaChange } from "../diff/openapi-differ.js";
 import { VALIDATION_COMPILER_OPTIONS, checkProject, type CompilerError } from "./type-checker.js";
@@ -15,6 +16,7 @@ export interface MigrationResult {
   files: FilePatch[];
   diagnostics: CompilerError[];
   issues: string[];
+  evidence: ChangeEvidence[];
 }
 
 /**
@@ -31,7 +33,7 @@ export async function migrateProject(
   project.resolveSourceFileDependencies();
   const compilerOptions = project.getCompilerOptions();
   const originals = new Map(project.getSourceFiles().map((source) => [source, source.getFullText()]));
-  const result: MigrationResult = { status: "blocked", llmAttempts: 0, changes: [], files: [], diagnostics: [], issues: [] };
+  const result: MigrationResult = { status: "blocked", llmAttempts: 0, changes: [], files: [], diagnostics: [], issues: [], evidence: [] };
   try {
     project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
     const baseline = checkProject(project);
@@ -46,6 +48,7 @@ export async function migrateProject(
       result.issues = unsupported.map((change) => `${change.location}: ${change.reason}`);
       return result;
     }
+    result.evidence = collectChangeEvidence(project, result.changes, bindings);
     applyCodemods(project, result.changes, bindings);
     let validation = checkProject(project);
     if (!validation.success && options.repair) {
