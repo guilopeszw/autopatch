@@ -1,0 +1,27 @@
+{
+  "id": "stripe",
+  "migration": "examples/stripe/autopatch.json",
+  "source": {
+    "repository": "stripe/openapi",
+    "ref": "master",
+    "path": "openapi/spec3.json"
+  },
+  "schemas": {
+    "subscription": [
+      "id",
+      "status",
+      "cancel_at_period_end",
+      "current_period_start",
+      "current_period_end"
+    ]
+  },
+  "verify": [
+    [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/check-billing-example.ts",
+      "stripe"
+    ]
+  ]
+}

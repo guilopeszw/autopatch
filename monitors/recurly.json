@@ -1,0 +1,21 @@
+{
+  "id": "recurly",
+  "migration": "examples/recurly/autopatch.json",
+  "source": {
+    "repository": "recurly/recurly-client-go",
+    "ref": "v3-v2021-02-25",
+    "path": "openapi/api.yaml"
+  },
+  "schemas": {
+    "SubscriptionPause": "*"
+  },
+  "verify": [
+    [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/check-billing-example.ts",
+      "recurly"
+    ]
+  ]
+}

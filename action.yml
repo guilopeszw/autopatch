@@ -1,0 +1,87 @@
+name: AutoPatch monitor
+description: Detect configured billing contract changes and propose checked draft PRs.
+inputs:
+  config:
+    description: Tracked monitor JSON path, relative to the application repository.
+    required: true
+  token:
+    description: GitHub token with contents, pull-requests, and issues write permissions.
+    required: true
+outputs:
+  status:
+    description: ready, unchanged, blocked, or failed.
+    value: ${{ steps.monitor.outputs.status }}
+runs:
+  using: composite
+  steps:
+    - name: Require trusted default-branch configuration
+      shell: bash
+      env:
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        if [[ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]]; then
+          printf 'Monitoring may run only from the default branch.\n' >&2
+          exit 1
+        fi
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: '24'
+    - name: Install AutoPatch runtime
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci
+    - name: Detect, plan, and check the application
+      id: monitor
+      shell: bash
+      env:
+        TOOL_ROOT: ${{ github.action_path }}
+        MONITOR_CONFIG: ${{ inputs.config }}
+      run: |
+        report_parent=$(mktemp -d "$RUNNER_TEMP/autopatch-monitor.XXXXXX")
+        report="$report_parent/report"
+        printf 'report=%s\n' "$report" >> "$GITHUB_OUTPUT"
+        set +e
+        node --import "$TOOL_ROOT/node_modules/tsx/dist/loader.mjs" "$TOOL_ROOT/scripts/monitor-api.ts" \
+          --root "$GITHUB_WORKSPACE" --config "$MONITOR_CONFIG" --output "$report" --prepare
+        code=$?
+        set -e
+        printf 'exit-code=%s\n' "$code" >> "$GITHUB_OUTPUT"
+        if [[ -f "$report/manifest.json" ]]; then
+          node --input-type=module - "$report/manifest.json" >> "$GITHUB_OUTPUT" <<'JS'
+        import fs from 'node:fs';
+        const manifest = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+        if (!['ready', 'unchanged', 'blocked', 'failed'].includes(manifest.status) || !/^[a-z][a-z0-9-]{0,39}$/.test(manifest.id)) throw new Error('Invalid monitor output');
+        console.log(`status=${manifest.status}\nid=${manifest.id}`);
+        JS
+        fi
+        if [[ -f "$report/body.md" ]]; then
+          cat "$report/body.md" >> "$GITHUB_STEP_SUMMARY"
+        else
+          printf 'Monitor failed. Inspect the run logs and artifacts.\n' >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: Attach schema snapshots and review evidence
+      if: ${{ always() && steps.monitor.outputs.report != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: autopatch-monitor-${{ steps.monitor.outputs.id }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ steps.monitor.outputs.report }}
+        if-no-files-found: warn
+        retention-days: 30
+    - name: Publish a draft or update the monitor notice
+      if: ${{ success() && steps.monitor.outputs.id != '' && steps.monitor.outputs.id != 'unknown' }}
+      shell: bash
+      env:
+        TOOL_ROOT: ${{ github.action_path }}
+        REPORT: ${{ steps.monitor.outputs.report }}
+        GH_TOKEN: ${{ inputs.token }}
+        GH_REPO: ${{ github.repository }}
+        BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        AUTOPATCH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        gh auth setup-git
+        node --import "$TOOL_ROOT/node_modules/tsx/dist/loader.mjs" "$TOOL_ROOT/scripts/publish-monitor.ts" \
+          --root "$GITHUB_WORKSPACE" --output "$REPORT" --repository "$GH_REPO" --base "$BASE_BRANCH" | tee -a "$GITHUB_STEP_SUMMARY"
+    - name: Require a successful monitor result
+      if: ${{ always() && steps.monitor.outputs.exit-code != '0' }}
+      shell: bash
+      run: exit 1

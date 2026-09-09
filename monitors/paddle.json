@@ -1,0 +1,21 @@
+{
+  "id": "paddle",
+  "migration": "examples/paddle/autopatch.json",
+  "source": {
+    "repository": "PaddleHQ/paddle-openapi",
+    "ref": "main",
+    "path": "v1/openapi.yaml"
+  },
+  "schemas": {
+    "CustomerPortalSessionUrlsSubscriptionsItem": "*"
+  },
+  "verify": [
+    [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/check-billing-example.ts",
+      "paddle"
+    ]
+  ]
+}
