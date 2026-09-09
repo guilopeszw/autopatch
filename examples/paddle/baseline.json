@@ -1,19 +1,16 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Paddle API",
-    "version": "authored-adapter-baseline"
-  },
-  "paths": {},
   "components": {
     "schemas": {
       "CustomerPortalSessionUrlsSubscriptionsItem": {
-        "type": "object",
-        "required": [
-          "id",
-          "cancel_subscription"
-        ],
+        "additionalProperties": false,
         "properties": {
+          "cancel_subscription": {
+            "description": "Link to the page for this subscription in the customer portal with the subscription cancellation form pre-opened. Use as part of cancel subscription workflows.",
+            "examples": [
+              "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=cancel_subscription&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
+            ],
+            "type": "string"
+          },
           "id": {
             "allOf": [
               {
@@ -22,26 +19,37 @@
             ],
             "description": "Paddle ID of the subscription that the authenticated customer portal deep links are for."
           },
-          "cancel_subscription": {
-            "type": "string",
-            "description": "Link to the page for this subscription in the customer portal with the subscription cancellation form pre-opened. Use as part of cancel subscription workflows.",
+          "update_subscription_payment_method": {
+            "description": "Link to the page for this subscription in the customer portal with the payment method update form pre-opened. Use as part of workflows to let customers update their payment details.\n\nIf a manually-collected subscription, opens the overview page for this subscription.",
             "examples": [
-              "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=cancel_subscription&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
-            ]
+              "https://customer-portal.paddle.com/cpl_01j7zbyqs3vah3aafp4jf62qaw?action=update_subscription_payment_method&subscription_id=sub_01h04vsc0qhwtsbsxh3422wjs4&token="
+            ],
+            "type": "string"
           }
         },
+        "required": [
+          "id",
+          "cancel_subscription",
+          "update_subscription_payment_method"
+        ],
         "title": "CustomerPortalSessionSubscriptionUrls",
-        "additionalProperties": false
+        "type": "object"
       },
       "SubscriptionId": {
-        "type": "string",
-        "pattern": "^sub_[a-z\\d]{26}$",
         "description": "Unique Paddle ID for this subscription entity, prefixed with `sub_`.",
-        "title": "Subscription ID",
         "examples": [
           "sub_01h04vsc0qhwtsbsxh3422wjs4"
-        ]
+        ],
+        "pattern": "^sub_[a-z\\d]{26}$",
+        "title": "Subscription ID",
+        "type": "string"
       }
     }
-  }
+  },
+  "info": {
+    "title": "Paddle API",
+    "version": "authored-adapter-baseline"
+  },
+  "openapi": "3.1.0",
+  "paths": {}
 }
