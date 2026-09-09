@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Chargebee API",
-    "version": "authored-adapter-baseline"
+    "version": "2026-08-28.ac160eefbc69961d63f4f80ac6f28ba294244db8"
   },
   "paths": {},
   "components": {
@@ -26,6 +26,7 @@
               "in_trial",
               "active",
               "non_renewing",
+              "paused",
               "cancelled",
               "transferred"
             ],
