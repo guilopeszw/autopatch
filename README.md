@@ -18,6 +18,7 @@ npm ci
 npm run typecheck   # native compiler diagnostics in memory; no shell tsc
 npm test           # real AST projects, filesystem transactions, and CLI tests
 npm run demo       # verified preview against the included fixture; no writes
+npm run evaluate   # offline corpus: runtime observations and expected rejections
 ```
 
 The demo migrates `createUser` → `registerUser` and `CreateUser.name` →
@@ -83,6 +84,7 @@ project's own tests before merging them.
 | Property renamed with explicit provenance | Rename the bound interface property and resolved references |
 | Direct property added/removed | Add/remove the interface member; compiler errors block incompatible consumers |
 | Property type or requiredness changed | Update the interface type and optional marker; validate every consumer |
+| Required field with an explicit binding value | Insert a type-checked scalar into directly typed object literals when missing |
 | Scalar and array property types | `string`, `number`, `integer`, `boolean`, `null`, nullable unions, scalar enums, recursively typed arrays |
 | Broken bound API calls | Optional isolated LLM repair, with bounded attempts and timeouts |
 | Unknown runtime contract changes | Report as unsupported and block the entire migration |
@@ -102,6 +104,22 @@ Without that extension, removal and addition remain separate changes. AutoPatch
 never infers a rename because two fields look similar. Ambiguous hints and rename
 collisions are rejected. A required new property does not acquire an invented
 business default.
+
+To supply an intentional value for a required field, add `defaults` to its schema
+binding, for example:
+
+```json
+{ "file": "src/api.ts", "export": "CreateUser", "defaults": { "region": "eu" } }
+```
+
+These are operator-provided migration values, independent of OpenAPI's `default`
+keyword. AutoPatch checks each against the destination TypeScript type, inserts
+it through AST property assignments, and preserves existing fields. Values must
+be finite JSON scalars; configured integer values must also be whole numbers.
+Insertion requires a direct contextual reference to the bound interface; ambiguous
+spreads, computed keys and unsupported producers require manual work. This also
+applies to a field becoming required. TypeScript models OpenAPI integers as
+`number`; it does not validate arbitrary runtime inputs for integer/range constraints.
 
 The supported input format is OpenAPI **3.0.x / 3.1.x JSON**. This is a focused
 migration parser, not a complete OpenAPI validator or SDK generator. Endpoint
@@ -222,10 +240,11 @@ changes in a pull request after running the target application's tests.
 | `src/core/runner/migration.ts` | Baseline check, orchestration, rollback, reviewable plan |
 | `src/core/runner/patch-writer.ts` | Fresh validation, stale-plan checks and guarded persistence |
 | `tests/fixtures/` | OpenAPI v1/v2 documents and a runnable target SDK/consumer |
+| `src/evaluation/corpus.ts`, `scripts/evaluate.ts` | Trusted fixture evaluation with independent runtime expectations |
 
 Tests exercise confirmed public boundaries with real AST projects. External HTTP
 and targeted filesystem failures are the only mocked boundaries. CI runs the
-in-memory compiler check, test suite and fixture preview on Node 24. Keep commits
+in-memory compiler check, test suite, fixture preview and offline corpus on Node 24. Keep commits
 focused and Conventional; deliver changes through pull requests.
 
 Primary references: [OpenAPI 3.1](https://spec.openapis.org/oas/v3.1.0.html),
@@ -237,3 +256,7 @@ and [Anthropic Messages](https://platform.claude.com/docs/en/api/http/messages/c
 
 The independent two-axis [PR #1 review](docs/reviews/pr-1.md) records findings,
 reproductions and their resolutions.
+
+See the [evaluation protocol](docs/evaluation.md) for the measured denominator,
+case matrix and limitations, and the [submission walkthrough](docs/submission.md)
+for a short demonstration and opt-in provider check.

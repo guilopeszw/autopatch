@@ -1,12 +1,15 @@
-import { Node, ts, type FunctionDeclaration, type InterfaceDeclaration, type Project } from "ts-morph";
+import { Node, Project, ts, type FunctionDeclaration, type InterfaceDeclaration } from "ts-morph";
+import { checkProject } from "../runner/type-checker.js";
 import { assertRenameSafety } from "./rename-safety.js";
 import type { SchemaChange } from "../diff/openapi-differ.js";
 
 /** Explicit SDK binding: paths are absolute or relative to the project root. */
 export interface SymbolBinding { file: string; export: string }
+/** Explicit scalar values for newly required request fields; never inferred from OAS defaults. */
+export interface SchemaBinding extends SymbolBinding { defaults?: Record<string, unknown> }
 export interface Bindings {
   operations: Record<string, SymbolBinding>;
-  schemas: Record<string, SymbolBinding>;
+  schemas: Record<string, SchemaBinding>;
 }
 
 /** Resolve a concrete declaration; never guess an SDK binding from a shared name. */
@@ -66,6 +69,9 @@ export function applyCodemods(project: Project, changes: readonly SchemaChange[]
         property?.remove();
       } else {
         const type = schemaType(change.after.schema);
+        if (change.after.required && binding.defaults && Object.hasOwn(binding.defaults, change.property)) {
+          insertConfiguredDefault(declaration, change.property, binding.defaults[change.property], change.after.schema);
+        }
         if (property) {
           property.setType(type);
           property.setHasQuestionToken(!change.after.required);
@@ -108,7 +114,47 @@ function schemaType(schema: Record<string, unknown>): string {
           (types.includes("number") || (types.includes("integer") && Number.isInteger(value)))))) {
       throw new Error("Enum values must match the declared scalar type");
     }
-    return [...new Set([...schema.enum.map((value: unknown) => JSON.stringify(value)), ...(schema.nullable ? ["null"] : [])])].join(" | ");
+    // Nullable widens the scalar type, but enum remains an independent constraint.
+    // Null is legal here only when it is explicitly present in the enum.
+    return [...new Set(schema.enum.map((value: unknown) => JSON.stringify(value)))].join(" | ");
   }
   return [...new Set([...output, ...(schema.nullable ? ["null"] : [])])].join(" | ");
+}
+
+/** Insert only into directly context-typed object literals, preserving existing fields. */
+function insertConfiguredDefault(declaration: InterfaceDeclaration, name: string, value: unknown, schema: Record<string, unknown>): void {
+  if (value !== null && typeof value !== "string" && typeof value !== "boolean" &&
+      !(typeof value === "number" && Number.isFinite(value))) {
+    throw new Error(`Configured default for ${name} must be a finite JSON scalar`);
+  }
+  const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+  // TypeScript lowers OpenAPI integer to number, so validate this known literal
+  // before lowering. A union explicitly allowing number still accepts fractions.
+  if (typeof value === "number" && types.includes("integer") && !types.includes("number") && !Number.isInteger(value)) {
+    throw new Error(`Configured default for ${name} must be an integer`);
+  }
+  const type = schemaType(schema);
+  const literal = JSON.stringify(value);
+  const validation = new Project({ useInMemoryFileSystem: true, compilerOptions: { strict: true } });
+  validation.createSourceFile("/default.ts", `const value: ${type} = ${literal};`);
+  if (!checkProject(validation).success) throw new Error(`Configured default for ${name} does not satisfy ${type}`);
+  const objects = declaration.getProject().getSourceFiles().filter((source) => !source.isInNodeModules())
+    .flatMap((source) => source.getDescendantsOfKind(ts.SyntaxKind.ObjectLiteralExpression))
+    .filter((object) => object.getContextualType()?.getSymbol()?.getDeclarations()
+      .some((node) => node.compilerNode === declaration.compilerNode));
+  for (const object of objects) {
+    if (object.getType().getProperty(name)) continue;
+    if (object.getProperties().some(Node.isSpreadAssignment)) throw new Error(`Cannot infer missing ${name} through a spread`);
+    // Literal keys have known names (including our own generated assignments).
+    // ponytail: block broader computed key types; finite-union analysis can relax
+    // this conservative guard when a real migration requires it.
+    if (object.getProperties().some((member) => {
+      const key = member.getFirstChildByKind(ts.SyntaxKind.ComputedPropertyName)?.getExpression().getType();
+      return key && !key.isStringLiteral() && !key.isNumberLiteral();
+    })) {
+      throw new Error(`Cannot infer missing ${name} through a computed property`);
+    }
+    // Computed keys preserve JSON semantics even for a key named __proto__.
+    object.addPropertyAssignment({ name: `[${JSON.stringify(name)}]`, initializer: literal });
+  }
 }
