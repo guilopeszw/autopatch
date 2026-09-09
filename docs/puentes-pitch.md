@@ -80,8 +80,8 @@ the small behavioral fixtures establish only their specified observations.
 
 ## Product sequence after the evaluation
 
-First, validate a second historical billing release against an independently
-generated client and meaningful consumer tests. Next, trial the migration workflow
+The second historical case now covers [Paddle's CLP/PEN currency release](../tests/fixtures/paddle-release/README.md)
+with an Orval-generated bounded client and loopback HTTP observations. Next, trial the migration workflow
 on a consenting team's repository and record attempted changes, verified patches,
 manual decisions, false positives, and review time. Keep those measurements separate
 from the curated corpus.

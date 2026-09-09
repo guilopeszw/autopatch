@@ -99,3 +99,14 @@ exercise required response data, subscription-state enum widening, and an
 explicitly configured value for a required pause request. All target contracts
 are pinned upstream excerpts; all three starting adapters are authored. These
 are separate from the real Stripe release pair and the 18-case authored corpus.
+
+## Historical Paddle release with a generated client
+
+The [Paddle currency case](../tests/fixtures/paddle-release/README.md) adds two
+checks against a two-field subscription projection from published snapshots
+bracketing the March 2026 CLP/PEN release. An unedited Orval 8.30.0 generated
+client preserves loopback HTTP observations after its model is migrated. An
+exhaustive currency-policy consumer blocks until an owner supplies decisions for
+the new currencies. Count this separately from the earlier authored Paddle
+customer-portal baseline. It is a real contract change with a generated bounded
+client, not a full Paddle upgrade or live payment test.
