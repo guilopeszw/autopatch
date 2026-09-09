@@ -143,3 +143,16 @@ corpus.push({
   bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { count: 1.5 } } } },
   expected: { status: 'blocked', reason: 'Configured default for count must be an integer' },
 });
+
+corpus.push({
+  id: 'multiple-configured-fields',
+  description: 'Insert multiple required values without treating prior generated keys as ambiguous.',
+  before: objectDoc({ id: { type: 'string' } }),
+  after: objectDoc({ id: { type: 'string' }, region: { type: 'string' }, zone: { type: 'string' } }, ['id', 'region', 'zone']),
+  files: {
+    '/sdk.ts': 'export interface Input { id: string } export function submit(input: Input) { return JSON.stringify(input); }',
+    '/consumer.ts': 'import { submit } from "./sdk.js"; export const result = submit({ id: "1" });',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'eu', zone: 'blue' } } } },
+  expected: { status: 'verified', before: '{"id":"1"}', after: '{"id":"1","region":"eu","zone":"blue"}' },
+});
