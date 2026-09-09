@@ -1,0 +1,6 @@
+{
+  "from": "examples/recurly/baseline.json",
+  "to": "examples/recurly/target.json",
+  "project": "examples/recurly/project/tsconfig.json",
+  "bindings": "examples/recurly/project/bindings.json"
+}

@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        provider: [stripe, brex, ramp]
+        provider: [stripe, paddle, chargebee, recurly]
     permissions:
       contents: write
       pull-requests: write

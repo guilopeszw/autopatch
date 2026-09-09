@@ -1,0 +1,52 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Chargebee API",
+    "version": "authored-adapter-baseline"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "deprecated": false,
+            "description": "The unique identifier of the `subscription`\nresource. You have the option to specify this value when creating a customer. If not specified, Chargebee automatically generates a unique identifier.  \n**Note**\nIn the event that the subscription resource is [transferred](/docs/api/business_entities/transfer-resources-to-another-business-entity) along with its associated [customer](/docs/api/customers) resource to a different business entity, Chargebee assigns a new random value as the `id` for the subscription. The original identifier is preserved for the transferred copy of the `subscription` resource. (See also: [Mechanics of business entity transfer](/docs/api/business_entities).)\n",
+            "maxLength": 50,
+            "example": null
+          },
+          "status": {
+            "type": "string",
+            "deprecated": false,
+            "description": "Current state of the subscription\n\n* future - The subscription is scheduled to start at a future date.\n* non_renewing - The subscription will be canceled at the end of the current term.\n* active - The subscription is active and will be charged for automatically based on the items in it.\n* cancelled - The subscription has been canceled and is no longer in service.\n* transferred -\n  The `transferred`\n  status will be reflected on the source business entity's subscription attribute once the [customer transfer](https://www.chargebee.com/docs/2.0/mbe-getting-started-with-customer-transfer.html)\n  activity is completed successfully.\n* in_trial - The subscription is in trial.\n* paused -\n  The subscription is [paused](https://www.chargebee.com/docs/2.0/pause-subscription.html).\n  The subscription will not renew while in this state.\n",
+            "enum": [
+              "future",
+              "in_trial",
+              "active",
+              "non_renewing",
+              "cancelled",
+              "transferred"
+            ],
+            "example": null
+          },
+          "auto_collection": {
+            "type": "string",
+            "deprecated": false,
+            "description": "Defines whether payments need to be collected automatically for this subscription. Overrides customer's auto-collection property.\n\n* on - Whenever an invoice is created for this subscription, an automatic charge will be attempted on the payment method available.\n* off - Automatic collection of charges will not be made for this subscription. Use this for offline payments.\n",
+            "enum": [
+              "on",
+              "off"
+            ],
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      }
+    }
+  }
+}

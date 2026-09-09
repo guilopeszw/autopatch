@@ -90,3 +90,12 @@ one successful adapter alignment and one safe rejection per provider. Their
 targets are published component objects captured with source hashes; their
 incomplete baselines are authored. Count these separately from historical release
 migrations. The same engine runs all providers with no provider-specific branch.
+
+## Subscription-billing focus
+
+[Paddle, Chargebee, and Recurly](../tests/fixtures/billing/README.md) add six
+contract checks: one verified case and one blocked consumer per provider. They
+exercise required response data, subscription-state enum widening, and an
+explicitly configured value for a required pause request. All target contracts
+are pinned upstream excerpts; all three starting adapters are authored. These
+are separate from the real Stripe release pair and the 18-case authored corpus.

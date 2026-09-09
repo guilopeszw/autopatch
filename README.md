@@ -1,6 +1,9 @@
 # AutoPatch
 
-Reviewable examples now cover [Stripe, Brex, and Ramp](examples/README.md).
+AutoPatch maintains TypeScript integrations with subscription-billing APIs,
+turning supported contract changes into reviewable, compiler-verified patches.
+The primary examples cover [Stripe, Paddle, Chargebee, and Recurly](examples/README.md);
+Brex and Ramp are secondary contract cases.
 Use [`--report`](docs/review-report.md) for the standalone review UI, or the
 [GitHub workflow](docs/schema-migration-workflow.md) to propose verified draft PRs
 when checked-in target schemas change. Provider coverage is bounded and documented.
@@ -234,8 +237,9 @@ process, power failure, or concurrent non-cooperating editor can interrupt the
 operation. A durable journal and editor coordination are outside this version.
 After an interrupted write, inspect Git status and `.autopatch-*.bak` recovery
 copies before removing a stale lock. Never remove another running process's lock.
-No migration automatically creates a Git commit; use a branch and review the
-changes in a pull request after running the target application's tests.
+The CLI does not create a Git commit. The optional GitHub workflow wraps it in a
+branch and draft PR; review changes and run the target application's tests before
+merging.
 
 ## Code and tests
 

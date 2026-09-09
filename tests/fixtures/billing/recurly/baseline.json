@@ -1,0 +1,23 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Recurly V3 API",
+    "version": "authored-adapter-baseline"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "SubscriptionPause": {
+        "type": "object",
+        "properties": {
+          "remaining_pause_cycles": {
+            "type": "integer",
+            "title": "Remaining pause cycles",
+            "description": "Number of billing cycles to pause the subscriptions. A value of 0 will cancel any pending pauses on the subscription."
+          }
+        },
+        "required": []
+      }
+    }
+  }
+}

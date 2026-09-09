@@ -1,0 +1,19 @@
+{
+  "provider": "paddle",
+  "repository": "PaddleHQ/paddle-openapi",
+  "commit": "540ea17369325ff866b65ecf6c5105592f16fb5d",
+  "url": "https://raw.githubusercontent.com/PaddleHQ/paddle-openapi/540ea17369325ff866b65ecf6c5105592f16fb5d/v1/openapi.yaml",
+  "sourceSha256": "e1ac347eb3c5ff208fdbd6af9c4b3f7e9e4e9212be881468ee4f97792058734b",
+  "component": "CustomerPortalSessionUrlsSubscriptionsItem",
+  "properties": [
+    "id",
+    "cancel_subscription",
+    "update_subscription_payment_method"
+  ],
+  "scope": "Published target contract; authored local adapter baseline. Not a historical release migration.",
+  "files": {
+    "target.json": "a2ad4c1eab412dead92718ec40d17fd3f05ae6f9b5ba7fb7593ac995543a1ee1",
+    "baseline.json": "764b10d6484a3cbd4f8413a86f93ee6e8f6823ec609a13624f81c6f5925080bf",
+    "LICENSE": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+  }
+}

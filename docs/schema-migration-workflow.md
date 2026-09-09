@@ -8,6 +8,10 @@ should demonstrate more providers, including Brex and Ramp. Existing requirement
 remain: AST codemods, in-memory compiler verification, isolated optional LLM
 context, tests, documentation, atomic Conventional Commits, and pull requests.
 
+The subsequent product decision is subscription billing: Stripe, Paddle,
+Chargebee, and Recurly are the primary examples. Brex and Ramp remain secondary
+evidence. This focus does not claim complete provider API coverage.
+
 - Preserve the generic engine; provider names belong in evidence and configuration.
 - Demonstrate a published Stripe release change and an important safe failure.
 - Exercise Brex and Ramp's published contracts, clearly labeling authored adapter
@@ -26,9 +30,9 @@ performing financial operations or claiming complete SDK compatibility.
 
 `.github/workflows/autopatch.yml` runs on a main-branch change to an example's
 `target.json` or `autopatch.json`, and through **Actions → AutoPatch migrations →
-Run workflow**. It runs Stripe, Brex, and Ramp independently. Source schemas are
+Run workflow**. It runs Stripe, Paddle, Chargebee, and Recurly independently. Source schemas are
 checked in; the workflow does not poll upstream URLs. The initial examples
-intentionally have pending migrations, so the first run can produce three PRs.
+intentionally have pending migrations, so the first run can produce four PRs.
 Provider evidence and limitations are linked in `examples/README.md`.
 
 Each `examples/<provider>/autopatch.json` maps four repository-relative paths:
@@ -39,7 +43,7 @@ paths and update the workflow matrix/trigger paths. No provider plugin is needed
 The preparation command runs in a **clean, disposable Git checkout**:
 
 ```sh
-node --import tsx scripts/prepare-migration-pr.ts --config examples/brex/autopatch.json --output /tmp/brex-pr-artifacts
+node --import tsx scripts/prepare-migration-pr.ts --config examples/paddle/autopatch.json --output /tmp/paddle-pr-artifacts
 ```
 
 The output directory must be new, its parent must exist, and it must be outside
