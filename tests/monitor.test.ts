@@ -94,6 +94,35 @@ test('blocks unsupported contract changes without running application checks or 
   expect(f.git('status', '--porcelain')).toBe('');
 });
 
+test('restores every recoverable file when a failed application check deletes a patched file', async () => {
+  const f = fixture();
+  const baseline = readFileSync(join(f.root, 'baseline.json'), 'utf8');
+  const target = readFileSync(join(f.root, 'target.json'), 'utf8');
+  const config = JSON.parse(readFileSync(join(f.root, 'monitor.json'), 'utf8'));
+  config.verify = [[process.execPath, '-e', "require('node:fs').unlinkSync('api.ts'); process.exit(1)"]];
+  writeFileSync(join(f.root, 'monitor.json'), JSON.stringify(config));
+  f.git('add', '.'); f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'test: delete a patched file during checks');
+  const { code, manifest } = await f.run('deleted-file', true);
+  expect(code).toBe(1);
+  expect(manifest).toMatchObject({ status: 'blocked', prepared: false, files: [] });
+  expect(readFileSync(join(f.root, 'baseline.json'), 'utf8')).toBe(baseline);
+  expect(readFileSync(join(f.root, 'target.json'), 'utf8')).toBe(target);
+  expect(f.git('status', '--porcelain').trim()).toBe('D api.ts');
+});
+
+test('removes its staged replacements after a failed check without overwriting concurrent source edits', async () => {
+  const f = fixture();
+  const config = JSON.parse(readFileSync(join(f.root, 'monitor.json'), 'utf8'));
+  config.verify = [[process.execPath, '-e', "require('node:child_process').execFileSync('git', ['add', 'api.ts']); require('node:fs').writeFileSync('api.ts', '// concurrent edit\\n'); process.exit(1)"]];
+  writeFileSync(join(f.root, 'monitor.json'), JSON.stringify(config));
+  f.git('add', '.'); f.git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'test: stage patch before failing checks');
+  const { code } = await f.run('staged-failure', true);
+  expect(code).toBe(1);
+  expect(f.git('diff', '--cached', '--name-only')).toBe('');
+  expect(readFileSync(join(f.root, 'api.ts'), 'utf8')).toBe('// concurrent edit\n');
+  expect(f.git('diff', '--name-only').trim()).toBe('api.ts');
+});
+
 test('retries a transient provider failure and reads an immutable YAML specification', async () => {
   const f = fixture();
   const config = JSON.parse(readFileSync(join(f.root, 'monitor.json'), 'utf8'));

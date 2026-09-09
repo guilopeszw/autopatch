@@ -62,7 +62,7 @@ export async function runMonitorCli(args: readonly string[], output: Output = { 
     writeFileSync(join(artifact, "review.html"), renderHtmlReport(result, { root: dirname(files.project), from: files.from, to: config.source.path }), { flag: "wx", mode: 0o600 });
     let status = result.status === "blocked" ? "blocked" : result.changes.length ? "ready" : "unchanged";
     const eventKey = digest(stableJson({ config, changes: result.changes, bindings: readJson(files.bindings) }));
-    const manifest = { id, status, prepared: false, head: git("rev-parse", "HEAD").trim(), patchSha256: "", eventKey, source: { ...config.source, revision: snapshot.revision, url: snapshot.url, sha256: snapshot.sha256 }, files: [] as string[] };
+    const manifest = { id, status, prepared: false, head: git("rev-parse", "HEAD").trim(), patchSha256: "", eventKey, source: { ...config.source, revision: snapshot.revision, url: snapshot.url, sha256: snapshot.sha256 }, files: [] as string[], issues: [...result.issues] };
     if (options.prepare && status === "ready") {
       assertInputsUnchanged();
       const edits = new Map(result.files.map(file => [file.path, { before: file.before, after: file.after }]));
@@ -98,7 +98,21 @@ export async function runMonitorCli(args: readonly string[], output: Output = { 
       } catch {
         // Restore only our unchanged replacements. Preserve concurrent edits;
         // the workflow discards this checkout after any failed preparation.
-        for (const [path, edit] of edits) if (readFileSync(path, "utf8") === edit.after) writeFileSync(path, edit.before);
+        for (const [path, edit] of edits) {
+          try {
+            // Unstage only our exact replacement; preserve any other staged edit.
+            if (git("show", `:${localPath(path)}`) === edit.after) git("restore", "--staged", "--", localPath(path));
+          } catch {
+            manifest.issues.push(`Could not restore index entry: ${localPath(path)}`);
+          }
+          try {
+            if (readFileSync(path, "utf8") === edit.after) writeFileSync(path, edit.before);
+            else manifest.issues.push(`Preserved a concurrent edit: ${localPath(path)}`);
+          } catch {
+            // A deleted or unreadable file must not prevent recovery of later files.
+            manifest.issues.push(`Could not restore ${localPath(path)}; inspect the disposable checkout`);
+          }
+        }
         status = "blocked"; manifest.status = status; manifest.files = [];
         writeFileSync(join(artifact, "failure.txt"), "Application checks or preparation failed; no PR may be published. Inspect the configured checks in a disposable checkout.\n", { flag: "wx", mode: 0o600 });
       }
