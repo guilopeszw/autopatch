@@ -82,3 +82,11 @@ migration with before/after behavioral observations, and a rejected consumer of
 a removed billing-period field. These are separate from the authored corpus and
 the generated Orval SDK scenario. The adapter and response examples are authored;
 the target contract changes are upstream, with pinned provenance.
+
+## Other provider contracts
+
+The [Brex and Ramp cases](../tests/fixtures/providers/README.md) add four checks:
+one successful adapter alignment and one safe rejection per provider. Their
+targets are published component objects captured with source hashes; their
+incomplete baselines are authored. Count these separately from historical release
+migrations. The same engine runs all providers with no provider-specific branch.

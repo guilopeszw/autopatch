@@ -1,0 +1,13 @@
+{
+  "provider": "brex",
+  "url": "https://developer.brex.com/_bundle/openapi/team_api.yaml",
+  "retrieved": "2026-09-09",
+  "sourceSha256": "58e231ca118eadf26eab21a9f819e63eec0ecb994409a60a2dfef3ce72449849",
+  "component": "Address",
+  "scope": "Unchanged complete component object from the published current specification; empty paths. Baseline is an authored incomplete adapter, not an older provider release.",
+  "omittedBaselineProperty": "phone_number",
+  "files": {
+    "baseline.json": "c02fa4fe8657837376d3574203a7e627ab8f2cc3c772ba4cb3fbc67bc24406f9",
+    "target.json": "6284fbf88090f70194b7c71e0ef9bdc2ad2877e92d37ec43a2b10469dfcebea0"
+  }
+}

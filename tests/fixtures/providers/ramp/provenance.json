@@ -1,0 +1,13 @@
+{
+  "provider": "ramp",
+  "url": "https://docs.ramp.com/openapi/developer-api.json",
+  "retrieved": "2026-09-09",
+  "sourceSha256": "7e710882c15744ed1ccddb0356e90a72b1a30bca108128e0c7fb1c5fd5d1e785",
+  "component": "ApiTransactionCardHolder",
+  "scope": "Unchanged complete component object from the published current specification; empty paths. Baseline is an authored incomplete adapter, not an older provider release.",
+  "omittedBaselineProperty": "employee_id",
+  "files": {
+    "baseline.json": "9f660c73c4f1534e8769b7596ddfde5f7299f00bf3069e018234b2b4a90b768f",
+    "target.json": "f004b82a77cad626d166a45ca91f7f63f84d3a53dc8cc5574329c441229ab7af"
+  }
+}
