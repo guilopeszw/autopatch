@@ -106,7 +106,7 @@ function parseBindings(value: unknown, root: string): Bindings {
   const section = (name: string): Record<string, SymbolBinding> => Object.fromEntries(
     Object.entries(object(input[name] ?? {})).map(([id, raw]) => {
       const binding = object(raw);
-      if (Object.keys(binding).some((key) => key !== "file" && key !== "export") ||
+      if (Object.keys(binding).some((key) => key !== "file" && key !== "export" && !(name === "schemas" && key === "defaults")) ||
           typeof binding.file !== "string" || !binding.file || typeof binding.export !== "string" || !binding.export) {
         throw new Error(`Invalid ${name} binding: ${id}`);
       }
@@ -115,7 +115,7 @@ function parseBindings(value: unknown, root: string): Bindings {
       if (local === ".." || local.startsWith(`..${sep}`) || isAbsolute(local) || local.split(sep).includes("node_modules")) {
         throw new Error(`Binding must be inside the target project: ${id}`);
       }
-      return [id, { file, export: binding.export }];
+      return [id, { file, export: binding.export, ...(binding.defaults === undefined ? {} : { defaults: object(binding.defaults) }) }];
     }),
   );
   return { operations: section("operations"), schemas: section("schemas") };

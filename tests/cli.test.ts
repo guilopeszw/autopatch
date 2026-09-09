@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
@@ -41,4 +41,27 @@ test('offers a CI check exit code without writing and rejects conflicting flags'
   expect(await runCli([...args, '--check'], silent)).toBe(1);
   expect(await runCli([...args, '--write', '--dry-run'], silent)).toBe(2);
   expect(readFileSync(join(root, 'api.ts'), 'utf8')).toBe(before);
+});
+
+test('reads explicit required-field values from bindings and preserves supplied values', async () => {
+  const { root } = fixture();
+  const schema = (required: string[]) => ({ openapi: '3.1.0', info: { title: 'CLI test', version: '1' }, paths: {}, components: { schemas: {
+    Input: { type: 'object', properties: { region: { type: 'string' } }, required },
+  } } });
+  writeFileSync(join(root, 'before.json'), JSON.stringify(schema([])));
+  writeFileSync(join(root, 'after.json'), JSON.stringify(schema(['region'])));
+  writeFileSync(join(root, 'api.ts'), 'export interface Input { region?: string } export function submit(input: Input) { return input.region; }');
+  writeFileSync(join(root, 'consumer.ts'), 'import { submit } from "./api.js"; submit({}); submit({ region: "us" });');
+  writeFileSync(join(root, 'bindings.json'), JSON.stringify({ operations: {}, schemas: {
+    Input: { file: 'api.ts', export: 'Input', defaults: { region: 'eu' } },
+  } }));
+  const args = ['--from', join(root, 'before.json'), '--to', join(root, 'after.json'),
+    '--project', join(root, 'tsconfig.json'), '--bindings', join(root, 'bindings.json'), '--write', '--json'];
+  let output = '';
+  const code = await runCli(args, { out: text => { output += text; }, err: () => {} });
+  expect(code, output).toBe(0);
+  expect(JSON.parse(output)).toMatchObject({ status: 'verified', written: true, llmAttempts: 0 });
+  const migrated = readFileSync(join(root, 'consumer.ts'), 'utf8');
+  expect(migrated).toContain('["region"]: "eu"');
+  expect(migrated).toContain('region: "us"');
 });

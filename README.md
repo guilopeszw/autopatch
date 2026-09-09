@@ -83,6 +83,7 @@ project's own tests before merging them.
 | Property renamed with explicit provenance | Rename the bound interface property and resolved references |
 | Direct property added/removed | Add/remove the interface member; compiler errors block incompatible consumers |
 | Property type or requiredness changed | Update the interface type and optional marker; validate every consumer |
+| Required field with an explicit binding value | Insert a type-checked scalar into directly typed object literals when missing |
 | Scalar and array property types | `string`, `number`, `integer`, `boolean`, `null`, nullable unions, scalar enums, recursively typed arrays |
 | Broken bound API calls | Optional isolated LLM repair, with bounded attempts and timeouts |
 | Unknown runtime contract changes | Report as unsupported and block the entire migration |
@@ -102,6 +103,21 @@ Without that extension, removal and addition remain separate changes. AutoPatch
 never infers a rename because two fields look similar. Ambiguous hints and rename
 collisions are rejected. A required new property does not acquire an invented
 business default.
+
+To supply an intentional value for a required field, add `defaults` to its schema
+binding, for example:
+
+```json
+{ "file": "src/api.ts", "export": "CreateUser", "defaults": { "region": "eu" } }
+```
+
+These are operator-provided migration values, independent of OpenAPI's `default`
+keyword. AutoPatch checks each against the destination TypeScript type, inserts
+it through AST property assignments, and preserves existing fields. Values must
+be finite JSON scalars. Insertion requires a direct contextual reference to the
+bound interface; ambiguous spreads and unsupported producers require manual work.
+This also applies to a field becoming required. TypeScript models OpenAPI integers
+as `number`; it does not validate integer/range constraints at runtime.
 
 The supported input format is OpenAPI **3.0.x / 3.1.x JSON**. This is a focused
 migration parser, not a complete OpenAPI validator or SDK generator. Endpoint

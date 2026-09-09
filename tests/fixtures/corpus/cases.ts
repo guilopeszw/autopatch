@@ -91,3 +91,29 @@ corpus.push(
     expected: { status: 'blocked', reason: 'Operation added or removed' },
   },
 );
+
+corpus.push({
+  id: 'required-field-with-explicit-value',
+  description: 'Use an explicitly configured region in typed request arguments, without an LLM.',
+  before: objectDoc({ id: { type: 'string' } }),
+  after: objectDoc({ id: { type: 'string' }, region: { type: 'string' } }, ['id', 'region']),
+  files: {
+    '/sdk.ts': 'export interface Input { id: string } export function submit(input: Input) { return JSON.stringify(input); }',
+    '/consumer.ts': 'import { submit, type Input } from "./sdk.js"; const input: Input = { id: "1" }; export const result = submit(input);',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'eu' } } } },
+  expected: { status: 'verified', before: '{"id":"1"}', after: '{"id":"1","region":"eu"}' },
+});
+
+corpus.push({
+  id: 'invalid-configured-value',
+  description: 'Reject an explicit value that violates the new contract without exposing partial edits.',
+  before: objectDoc({ id: { type: 'string' } }),
+  after: objectDoc({ id: { type: 'string' }, region: { type: 'string', enum: ['eu', 'us'] } }, ['id', 'region']),
+  files: {
+    '/sdk.ts': 'export interface Input { id: string } export function submit(input: Input) { return input.id; }',
+    '/consumer.ts': 'import { submit } from "./sdk.js"; export const result = submit({ id: "1" });',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'unknown' } } } },
+  expected: { status: 'blocked', reason: 'Configured default for region does not satisfy' },
+});
