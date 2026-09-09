@@ -19,6 +19,10 @@ apply to these copies. The Stripe excerpts are covered by the included upstream
 license. These are local adapters, not complete provider SDKs or authenticated
 account integrations.
 
+The [scheduled monitor](../docs/monitoring.md) polls the four billing sources and
+runs explicit offline application checks before proposing a draft PR. Schema
+selection is recorded in `monitors/`; unselected provider features are outside scope.
+
 See [workflow operation and adoption](../docs/schema-migration-workflow.md) and
 [the review report](../docs/review-report.md). All examples use the same engine.
 The default workflow focuses on the four subscription-billing examples; Brex and

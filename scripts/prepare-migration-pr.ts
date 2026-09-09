@@ -8,8 +8,8 @@ import { mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { Command } from "commander";
 import { Project } from "ts-morph";
-import { runCli } from "../src/cli.js";
-import type { MigrationResult } from "../src/core/runner/migration.js";
+import { planFileMigration } from "../src/core/runner/file-planner.js";
+import { renderHtmlReport } from "../src/report/html-report.js";
 import { writeVerifiedPatch } from "../src/core/runner/patch-writer.js";
 
 const command = new Command().requiredOption("--config <file>", "tracked migration config, paths relative to repository root")
@@ -50,20 +50,15 @@ try {
   if (!outside(output)) throw new Error("Artifact directory must be outside the repository");
   mkdirSync(output, { mode: 0o700 });
   const write = (name: string, text: string) => writeFileSync(join(output, name), text, { flag: "wx", mode: 0o600 });
-  let json = "";
-  let error = "";
-  const code = await runCli(["--from", from, "--to", to, "--project", project, "--bindings", bindings,
-    "--json", "--report", join(output, "review.html")], { out: text => { json += text; }, err: text => { error += text; } });
-  write("result.json", json);
-  // The JSON originates from our in-process CLI, not an external report file.
-  // Never accept user-supplied plans as authority for writing or staging files.
-  if (code !== 0) {
+  const result = await planFileMigration({ from, to, project, bindings });
+  write("result.json", JSON.stringify({ ...result, written: false, warnings: [] }, null, 2));
+  write("review.html", renderHtmlReport(result, { root: dirname(project), from, to }));
+  if (result.status === "blocked") {
     write("manifest.json", JSON.stringify({ status: "blocked", files: [] }, null, 2));
     write("body.md", "AutoPatch could not prepare a verified migration. Inspect result.json and review.html for findings.\n");
-    process.stderr.write(error || "Migration blocked; artifacts contain the findings.\n");
-    process.exitCode = code;
+    process.stderr.write("Migration blocked; artifacts contain the findings.\n");
+    process.exitCode = 1;
   } else {
-    const result = JSON.parse(json) as MigrationResult;
     const files = result.files.map(file => localPath(file.path));
     for (const path of files) if (!tracked.has(path)) throw new Error(`Refusing to stage an untracked source: ${path}`);
     // The CLI has validated this document. Advance operation keys and exported

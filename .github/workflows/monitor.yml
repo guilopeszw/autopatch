@@ -1,0 +1,36 @@
+name: Monitor billing APIs
+
+on:
+  schedule:
+    - cron: '17 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autopatch-monitor-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    # Only trusted default-branch configuration can run checks and publish drafts.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [stripe, paddle, chargebee, recurly]
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./
+        with:
+          config: monitors/${{ matrix.provider }}.json
+          token: ${{ github.token }}

@@ -1,0 +1,25 @@
+{
+  "id": "chargebee",
+  "migration": "examples/chargebee/autopatch.json",
+  "source": {
+    "repository": "chargebee/openapi",
+    "ref": "main",
+    "path": "spec/chargebee_api_v2_pc_v2_spec.json"
+  },
+  "schemas": {
+    "Subscription": [
+      "id",
+      "status",
+      "auto_collection"
+    ]
+  },
+  "verify": [
+    [
+      "node",
+      "--import",
+      "tsx",
+      "scripts/check-billing-example.ts",
+      "chargebee"
+    ]
+  ]
+}

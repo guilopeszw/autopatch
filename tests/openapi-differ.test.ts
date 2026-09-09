@@ -43,3 +43,22 @@ test("rejects ambiguous property rename hints instead of merging two fields", ()
     document({ type: "object", properties: { label: { type: "string", "x-autopatch-previous-name": "name" } } }),
   )).toThrow(/ambiguous/i);
 });
+
+test("treats explicit default additionalProperties as unchanged while retaining actual constraints", () => {
+  const before = document({ type: "object", properties: { status: { type: "string" } } });
+  const explicitDefault = document({ type: "object", additionalProperties: true, properties: { status: { type: "string" } } });
+  expect(diffOpenApi(before, explicitDefault)).toEqual([]);
+  expect(diffOpenApi(explicitDefault, before)).toEqual([]);
+  expect(diffOpenApi(before, document({ type: "object", additionalProperties: false, properties: { status: { type: "string" } } })))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+});
+
+test("does not erase additionalProperties changes that affect unevaluated properties", () => {
+  const closed = { type: "object", properties: { name: { type: "string" } }, unevaluatedProperties: false };
+  // In OAS 3.1, explicit true marks extra fields evaluated, bypassing this restriction.
+  const open = { ...closed, additionalProperties: true };
+  expect(diffOpenApi(document(open), document(closed)))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+  expect(diffOpenApi(document(closed), document(open)))
+    .toEqual([expect.objectContaining({ kind: "unsupported", location: "Input" })]);
+});

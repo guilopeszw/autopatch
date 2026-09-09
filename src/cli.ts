@@ -1,10 +1,10 @@
-import { readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
 import { Project } from "ts-morph";
-import type { Bindings, SymbolBinding } from "./core/ast/codemod-builder.js";
 import { createRepairTransport } from "./core/agent/providers.js";
-import { migrateProject, type MigrationOptions, type MigrationResult } from "./core/runner/migration.js";
+import type { MigrationOptions, MigrationResult } from "./core/runner/migration.js";
+import { planFileMigration } from "./core/runner/file-planner.js";
 import { writeVerifiedPatch } from "./core/runner/patch-writer.js";
 import { renderHtmlReport } from "./report/html-report.js";
 
@@ -43,9 +43,6 @@ export async function runCli(args: readonly string[], output: Output = {
   program.action(async (options: CliOptions) => {
     const configPath = resolve(options.project);
     const root = dirname(configPath);
-    const before = readJson(resolve(options.from));
-    const after = readJson(resolve(options.to));
-    const bindings = parseBindings(readJson(resolve(options.bindings), 256_000), root);
     const migrationOptions: MigrationOptions = {};
     if (options.llm !== "none") {
       if (!options.model) throw new Error("--model is required when LLM repair is enabled");
@@ -57,8 +54,7 @@ export async function runCli(args: readonly string[], output: Output = {
         maxAttempts: options.maxAttempts, timeoutMs: options.timeoutMs,
       };
     } else if (options.model) throw new Error("--model requires an explicit --llm provider");
-    const project = new Project({ tsConfigFilePath: configPath });
-    const result = await migrateProject(project, before, after, bindings, migrationOptions);
+    const result = await planFileMigration(options, migrationOptions);
     if (options.report) {
       if (!options.report.endsWith(".html")) throw new Error("--report requires a new .html file");
       // Exclusive creation prevents source/report overwrites. Export before any
@@ -94,39 +90,6 @@ function integer(min: number, max: number): (value: string) => number {
     if (!Number.isInteger(number) || number < min || number > max) throw new InvalidArgumentError(`Expected an integer between ${min} and ${max}`);
     return number;
   };
-}
-
-function readJson(path: string, maxBytes = 5_000_000): unknown {
-  const stats = statSync(path);
-  if (!stats.isFile() || stats.size > maxBytes) throw new Error(`Expected a JSON file smaller than ${maxBytes} bytes: ${path}`);
-  try { return JSON.parse(readFileSync(path, "utf8")) as unknown; }
-  catch { throw new Error(`Invalid JSON: ${path}. YAML is not supported; convert it to JSON first.`); }
-}
-
-/** Bindings are explicit trust-boundary input; paths are relative to the target tsconfig directory. */
-function parseBindings(value: unknown, root: string): Bindings {
-  const object = (input: unknown): Record<string, unknown> => {
-    if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Bindings must contain JSON objects");
-    return input as Record<string, unknown>;
-  };
-  const input = object(value);
-  if (Object.keys(input).some((key) => key !== "operations" && key !== "schemas")) throw new Error("Unknown bindings section");
-  const section = (name: string): Record<string, SymbolBinding> => Object.fromEntries(
-    Object.entries(object(input[name] ?? {})).map(([id, raw]) => {
-      const binding = object(raw);
-      if (Object.keys(binding).some((key) => key !== "file" && key !== "export" && !(name === "schemas" && key === "defaults")) ||
-          typeof binding.file !== "string" || !binding.file || typeof binding.export !== "string" || !binding.export) {
-        throw new Error(`Invalid ${name} binding: ${id}`);
-      }
-      const file = resolve(root, binding.file);
-      const local = relative(root, file);
-      if (local === ".." || local.startsWith(`..${sep}`) || isAbsolute(local) || local.split(sep).includes("node_modules")) {
-        throw new Error(`Binding must be inside the target project: ${id}`);
-      }
-      return [id, { file, export: binding.export, ...(binding.defaults === undefined ? {} : { defaults: object(binding.defaults) }) }];
-    }),
-  );
-  return { operations: section("operations"), schemas: section("schemas") };
 }
 
 function formatReport(result: MigrationResult, written: boolean): string {
