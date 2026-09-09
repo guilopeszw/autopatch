@@ -1,0 +1,9 @@
+{
+  "operations": {
+    "getStripePrices": {
+      "file": "lib/payments/stripe.ts",
+      "export": "getStripePrices"
+    }
+  },
+  "schemas": {}
+}

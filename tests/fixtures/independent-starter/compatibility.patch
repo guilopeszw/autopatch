@@ -1,0 +1,672 @@
+diff --git a/assets.d.ts b/assets.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..013841b7e11034cdfe3b4e46b4fdbec2a146d601
+--- /dev/null
++++ b/assets.d.ts
+@@ -0,0 +1,2 @@
++/** Plain CSS imports have side effects and no JavaScript exports. */
++declare module "*.css" {}
+diff --git a/lib/db/drizzle.ts b/lib/db/drizzle.ts
+index 7dc4a1b4fe5491614ca1d4343449f1475adaad0d..c27ea7e96d264472b91a4ca8e99602abd095dd42 100644
+--- a/lib/db/drizzle.ts
++++ b/lib/db/drizzle.ts
+@@ -10,4 +10,4 @@ if (!process.env.POSTGRES_URL) {
+ }
+ 
+ export const client = postgres(process.env.POSTGRES_URL);
+-export const db = drizzle(client, { schema });
++export const db = drizzle({ client, relations: schema.relations });
+diff --git a/lib/db/queries.ts b/lib/db/queries.ts
+index 1bcdf644b9552d6ba36559574454f8feee0f73b9..15d3a5ad07a7ad66eb623f8fce61fb352e1c8952 100644
+--- a/lib/db/queries.ts
++++ b/lib/db/queries.ts
+@@ -106,7 +106,7 @@ export async function getTeamForUser() {
+   }
+ 
+   const result = await db.query.teamMembers.findFirst({
+-    where: eq(teamMembers.userId, user.id),
++    where: { userId: user.id },
+     with: {
+       team: {
+         with: {
+diff --git a/lib/db/schema.ts b/lib/db/schema.ts
+index 1d047ce6614313dc465ebe710862d05fdbd87fb8..cb3b64810cdb5adc7ea7d3048cc2092d871e52d4 100644
+--- a/lib/db/schema.ts
++++ b/lib/db/schema.ts
+@@ -6,7 +6,7 @@ import {
+   timestamp,
+   integer,
+ } from 'drizzle-orm/pg-core';
+-import { relations } from 'drizzle-orm';
++import { defineRelations } from 'drizzle-orm';
+ 
+ export const users = pgTable('users', {
+   id: serial('id').primaryKey(),
+@@ -67,51 +67,6 @@ export const invitations = pgTable('invitations', {
+   invitedAt: timestamp('invited_at').notNull().defaultNow(),
+   status: varchar('status', { length: 20 }).notNull().default('pending'),
+ });
+-
+-export const teamsRelations = relations(teams, ({ many }) => ({
+-  teamMembers: many(teamMembers),
+-  activityLogs: many(activityLogs),
+-  invitations: many(invitations),
+-}));
+-
+-export const usersRelations = relations(users, ({ many }) => ({
+-  teamMembers: many(teamMembers),
+-  invitationsSent: many(invitations),
+-}));
+-
+-export const invitationsRelations = relations(invitations, ({ one }) => ({
+-  team: one(teams, {
+-    fields: [invitations.teamId],
+-    references: [teams.id],
+-  }),
+-  invitedBy: one(users, {
+-    fields: [invitations.invitedBy],
+-    references: [users.id],
+-  }),
+-}));
+-
+-export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+-  user: one(users, {
+-    fields: [teamMembers.userId],
+-    references: [users.id],
+-  }),
+-  team: one(teams, {
+-    fields: [teamMembers.teamId],
+-    references: [teams.id],
+-  }),
+-}));
+-
+-export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+-  team: one(teams, {
+-    fields: [activityLogs.teamId],
+-    references: [teams.id],
+-  }),
+-  user: one(users, {
+-    fields: [activityLogs.userId],
+-    references: [users.id],
+-  }),
+-}));
+-
+ export type User = typeof users.$inferSelect;
+ export type NewUser = typeof users.$inferInsert;
+ export type Team = typeof teams.$inferSelect;
+@@ -140,3 +95,27 @@ export enum ActivityType {
+   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
+   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
+ }
++
++export const relations = defineRelations({ users, teams, teamMembers, activityLogs, invitations }, (r) => ({
++      teams: {
++        teamMembers: r.many.teamMembers({ from: r.teams.id, to: r.teamMembers.teamId }),
++        activityLogs: r.many.activityLogs({ from: r.teams.id, to: r.activityLogs.teamId }),
++        invitations: r.many.invitations({ from: r.teams.id, to: r.invitations.teamId })
++      },
++      users: {
++        teamMembers: r.many.teamMembers({ from: r.users.id, to: r.teamMembers.userId }),
++        invitationsSent: r.many.invitations({ from: r.users.id, to: r.invitations.invitedBy })
++      },
++      invitations: {
++        team: r.one.teams({ from: r.invitations.teamId, to: r.teams.id, optional: false }),
++        inviter: r.one.users({ from: r.invitations.invitedBy, to: r.users.id, optional: false })
++      },
++      teamMembers: {
++        user: r.one.users({ from: r.teamMembers.userId, to: r.users.id, optional: false }),
++        team: r.one.teams({ from: r.teamMembers.teamId, to: r.teams.id, optional: false })
++      },
++      activityLogs: {
++        team: r.one.teams({ from: r.activityLogs.teamId, to: r.teams.id, optional: false }),
++        user: r.one.users({ from: r.activityLogs.userId, to: r.users.id })
++      }
++    }));
+diff --git a/package.json b/package.json
+index 7db3e406358057d122d97344aa0114fa8ba6c7b4..991445586892e1ed592e4692534c8dad2a5ee98c 100644
+--- a/package.json
++++ b/package.json
+@@ -21,7 +21,7 @@
+     "clsx": "^2.1.1",
+     "dotenv": "^16.5.0",
+     "drizzle-kit": "^0.31.1",
+-    "drizzle-orm": "^0.43.1",
++    "drizzle-orm": "1.0.0-rc.5-ab785fc",
+     "jose": "^6.0.11",
+     "lucide-react": "^0.511.0",
+     "next": "15.6.0-canary.59",
+@@ -36,7 +36,7 @@
+     "tailwind-merge": "^3.3.0",
+     "tailwindcss": "4.1.7",
+     "tw-animate-css": "^1.3.0",
+-    "typescript": "^5.8.3",
++    "typescript": "6.0.3",
+     "zod": "^3.24.4"
+   }
+ }
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 95de5d4ba54b7443da30bf506379ade55b389ef7..f911b78955454df17cb9cba7d9f48c495e5e8158 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -39,8 +39,8 @@ importers:
+         specifier: ^0.31.1
+         version: 0.31.1
+       drizzle-orm:
+-        specifier: ^0.43.1
+-        version: 0.43.1(gel@2.1.0)(postgres@3.4.5)
++        specifier: 1.0.0-rc.5-ab785fc
++        version: 1.0.0-rc.5-ab785fc(mysql2@3.24.4(@types/node@22.15.18))(postgres@3.4.5)(zod@3.24.4)
+       jose:
+         specifier: ^6.0.11
+         version: 6.0.11
+@@ -84,8 +84,8 @@ importers:
+         specifier: ^1.3.0
+         version: 1.3.0
+       typescript:
+-        specifier: ^5.8.3
+-        version: 5.8.3
++        specifier: 6.0.3
++        version: 6.0.3
+       zod:
+         specifier: ^3.24.4
+         version: 3.24.4
+@@ -621,9 +621,6 @@ packages:
+     cpu: [x64]
+     os: [win32]
+ 
+-  '@petamoriken/float16@3.9.2':
+-    resolution: {integrity: sha512-VgffxawQde93xKxT3qap3OH+meZf7VaSB5Sqd4Rqc+FP5alWbpOyan/7tRbOAvynjpG3GpdtAuGU/NdhQpmrog==}
+-
+   '@radix-ui/number@1.1.1':
+     resolution: {integrity: sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==}
+ 
+@@ -1427,6 +1424,10 @@ packages:
+     peerDependencies:
+       postcss: ^8.1.0
+ 
++  aws-ssl-profiles@1.1.2:
++    resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
++    engines: {node: '>= 6.0.0'}
++
+   bcryptjs@3.0.2:
+     resolution: {integrity: sha512-k38b3XOZKv60C4E2hVsXTolJWfkGRMbILBIe2IBITXciy5bOsTKot5kDrf3ZfufQtQOUN5mXceUEpU1rTl9Uog==}
+     hasBin: true
+@@ -1499,42 +1500,80 @@ packages:
+     resolution: {integrity: sha512-PUjYKWtzOzPtdtQlTHQG3qfv4Y0XT8+Eas6UbxCmxTj7qgMf+39dDujf1BP1I+qqZtw9uzwTh8jYtkMuCq+B0Q==}
+     hasBin: true
+ 
+-  drizzle-orm@0.43.1:
+-    resolution: {integrity: sha512-dUcDaZtE/zN4RV/xqGrVSMpnEczxd5cIaoDeor7Zst9wOe/HzC/7eAaulywWGYXdDEc9oBPMjayVEDg0ziTLJA==}
++  drizzle-orm@1.0.0-rc.5-ab785fc:
++    resolution: {integrity: sha512-28PVt0PS/+4kPa8eKr4mqP8y/YcbdOgdVcGUa6LGl2Kd2bykNWuf/WUOFoSCoynagblbcRgMO1zChLvRcWD6Tg==}
+     peerDependencies:
+       '@aws-sdk/client-rds-data': '>=3'
+       '@cloudflare/workers-types': '>=4'
++      '@effect/sql-d1': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-libsql': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-mysql2': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-pg': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-pglite': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-sqlite-bun': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-sqlite-do': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-sqlite-node': '>=4.0.0-beta.105 || >=4.0.0'
++      '@effect/sql-sqlite-wasm': '>=4.0.0-beta.105 || >=4.0.0'
+       '@electric-sql/pglite': '>=0.2.0'
+       '@libsql/client': '>=0.10.0'
+       '@libsql/client-wasm': '>=0.10.0'
+       '@neondatabase/serverless': '>=0.10.0'
+-      '@op-engineering/op-sqlite': '>=2'
++      '@op-engineering/op-sqlite': '>=17'
+       '@opentelemetry/api': ^1.4.1
+       '@planetscale/database': '>=1.13'
+-      '@prisma/client': '*'
++      '@sinclair/typebox': '>=0.34.8'
++      '@sqlitecloud/drivers': '>=1.0.653'
+       '@tidbcloud/serverless': '*'
++      '@tursodatabase/database': '>=0.7.1'
++      '@tursodatabase/database-common': '>=0.7.1'
++      '@tursodatabase/database-wasm': '>=0.7.1'
++      '@tursodatabase/serverless': '>=1.4.0'
++      '@tursodatabase/sync': '>=0.7.1'
+       '@types/better-sqlite3': '*'
++      '@types/mssql': ^9.1.4
+       '@types/pg': '*'
+       '@types/sql.js': '*'
++      '@upstash/redis': '>=1.34.7'
+       '@vercel/postgres': '>=0.8.0'
+       '@xata.io/client': '*'
+-      better-sqlite3: '>=7'
++      arktype: '>=2.0.0'
++      better-sqlite3: '>=9.3.0'
+       bun-types: '*'
++      effect: '>=4.0.0-beta.105 || >=4.0.0'
+       expo-sqlite: '>=14.0.0'
+-      gel: '>=2'
+-      knex: '*'
+-      kysely: '*'
++      minipg: '>=0.2.0'
++      mssql: ^11.0.1
+       mysql2: '>=2'
+       pg: '>=8'
+       postgres: '>=3'
+-      prisma: '*'
+       sql.js: '>=1'
+       sqlite3: '>=5'
++      typebox: '>=1.2.0'
++      valibot: '>=1.0.0-beta.7'
++      zod: ^3.25.0 || ^4.0.0
+     peerDependenciesMeta:
+       '@aws-sdk/client-rds-data':
+         optional: true
+       '@cloudflare/workers-types':
+         optional: true
++      '@effect/sql-d1':
++        optional: true
++      '@effect/sql-libsql':
++        optional: true
++      '@effect/sql-mysql2':
++        optional: true
++      '@effect/sql-pg':
++        optional: true
++      '@effect/sql-pglite':
++        optional: true
++      '@effect/sql-sqlite-bun':
++        optional: true
++      '@effect/sql-sqlite-do':
++        optional: true
++      '@effect/sql-sqlite-node':
++        optional: true
++      '@effect/sql-sqlite-wasm':
++        optional: true
+       '@electric-sql/pglite':
+         optional: true
+       '@libsql/client':
+@@ -1549,31 +1588,49 @@ packages:
+         optional: true
+       '@planetscale/database':
+         optional: true
+-      '@prisma/client':
++      '@sinclair/typebox':
++        optional: true
++      '@sqlitecloud/drivers':
+         optional: true
+       '@tidbcloud/serverless':
+         optional: true
++      '@tursodatabase/database':
++        optional: true
++      '@tursodatabase/database-common':
++        optional: true
++      '@tursodatabase/database-wasm':
++        optional: true
++      '@tursodatabase/serverless':
++        optional: true
++      '@tursodatabase/sync':
++        optional: true
+       '@types/better-sqlite3':
+         optional: true
++      '@types/mssql':
++        optional: true
+       '@types/pg':
+         optional: true
+       '@types/sql.js':
+         optional: true
++      '@upstash/redis':
++        optional: true
+       '@vercel/postgres':
+         optional: true
+       '@xata.io/client':
+         optional: true
++      arktype:
++        optional: true
+       better-sqlite3:
+         optional: true
+       bun-types:
+         optional: true
+-      expo-sqlite:
++      effect:
+         optional: true
+-      gel:
++      expo-sqlite:
+         optional: true
+-      knex:
++      minipg:
+         optional: true
+-      kysely:
++      mssql:
+         optional: true
+       mysql2:
+         optional: true
+@@ -1581,12 +1638,16 @@ packages:
+         optional: true
+       postgres:
+         optional: true
+-      prisma:
+-        optional: true
+       sql.js:
+         optional: true
+       sqlite3:
+         optional: true
++      typebox:
++        optional: true
++      valibot:
++        optional: true
++      zod:
++        optional: true
+ 
+   dunder-proto@1.0.1:
+     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
+@@ -1599,10 +1660,6 @@ packages:
+     resolution: {integrity: sha512-ZSW3ma5GkcQBIpwZTSRAI8N71Uuwgs93IezB7mf7R60tC8ZbJideoDNKjHn2O9KIlx6rkGTTEk1xUCK2E1Y2Yg==}
+     engines: {node: '>=10.13.0'}
+ 
+-  env-paths@3.0.0:
+-    resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
+-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+-
+   es-define-property@1.0.1:
+     resolution: {integrity: sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==}
+     engines: {node: '>= 0.4'}
+@@ -1640,10 +1697,8 @@ packages:
+   function-bind@1.1.2:
+     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
+ 
+-  gel@2.1.0:
+-    resolution: {integrity: sha512-HCeRqInCt6BjbMmeghJ6BKeYwOj7WJT5Db6IWWAA3IMUUa7or7zJfTUEkUWCxiOtoXnwnm96sFK9Fr47Yh2hOA==}
+-    engines: {node: '>= 18.0.0'}
+-    hasBin: true
++  generate-function@2.3.1:
++    resolution: {integrity: sha512-eeB5GfMNeevm/GRYq20ShmsaGcmI81kIX2K9XQx5miC8KdHaC6Jm0qQ8ZNeGOi7wYB8OsdxKs+Y2oVuTFuVwKQ==}
+ 
+   get-intrinsic@1.3.0:
+     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
+@@ -1675,9 +1730,12 @@ packages:
+     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
+     engines: {node: '>= 0.4'}
+ 
+-  isexe@3.1.1:
+-    resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
+-    engines: {node: '>=16'}
++  iconv-lite@0.7.3:
++    resolution: {integrity: sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==}
++    engines: {node: '>=0.10.0'}
++
++  is-property@1.0.2:
++    resolution: {integrity: sha512-Ks/IoX00TtClbGQr4TWXemAnktAQvYB7HzcCxDGqEZU6oCmb2INHuOoKxbtR+HFkmYWBKv/dOZtGRiAjDhj92g==}
+ 
+   jiti@2.4.2:
+     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
+@@ -1750,6 +1808,13 @@ packages:
+     resolution: {integrity: sha512-xi6IyHML+c9+Q3W0S4fCQJOym42pyurFiJUHEcEyHS0CeKzia4yZDEsLlqOFykxOdHpNy0NmvVO31vcSqAxJCg==}
+     engines: {node: '>= 12.0.0'}
+ 
++  long@5.3.2:
++    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
++
++  lru.min@1.1.5:
++    resolution: {integrity: sha512-5J9ysMYUpYIg9RF2vJpy9SinEmSviFSe0GyPpCQ4L5QSkLAgeLXlTAOu2ZwWUU5m+0SBl6gUU1R1ZQB3aKypfA==}
++    engines: {bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0'}
++
+   lucide-react@0.511.0:
+     resolution: {integrity: sha512-VK5a2ydJ7xm8GvBeKLS9mu1pVK6ucef9780JVUjw6bAjJL/QXnd4Y0p7SPeOUMC27YhzNCZvm5d/QX0Tp3rc0w==}
+     peerDependencies:
+@@ -1778,6 +1843,16 @@ packages:
+   ms@2.1.3:
+     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+ 
++  mysql2@3.24.4:
++    resolution: {integrity: sha512-A2olluVlj0mvgyIRRISMEzXc51m+21mRtcMVjJyIpt2GG98+XrC9m9HzsqcMsX2LcnfccJvY5NB22g8fENBnOA==}
++    engines: {node: '>= 8.0'}
++    peerDependencies:
++      '@types/node': '>= 8'
++
++  named-placeholders@1.1.6:
++    resolution: {integrity: sha512-Tz09sEL2EEuv5fFowm419c1+a/jSMiBjI9gHxVLrVdbUkkNUUfjsVYs9pVZu5oCon/kmRh9TfLEObFtkVxmY0w==}
++    engines: {node: '>=8.0.0'}
++
+   nanoid@3.3.11:
+     resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
+     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+@@ -1892,6 +1967,9 @@ packages:
+   resolve-pkg-maps@1.0.0:
+     resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
+ 
++  safer-buffer@2.1.2:
++    resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
++
+   scheduler@0.26.0:
+     resolution: {integrity: sha512-NlHwttCI/l5gCPR3D1nNXtWABUmBwvZpEQiD4IXSbIDq8BzLIK/7Ir5gTFSGZDUu37K5cMNp0hFtzO38sC7gWA==}
+ 
+@@ -1907,10 +1985,6 @@ packages:
+     resolution: {integrity: sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==}
+     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
+ 
+-  shell-quote@1.8.2:
+-    resolution: {integrity: sha512-AzqKpGKjrj7EM6rKVQEPpB288oCfnrEIuyoT9cyF4nmGa7V8Zk6f7RRqYisX8X9m+Q7bd632aZW4ky7EhbQztA==}
+-    engines: {node: '>= 0.4'}
+-
+   side-channel-list@1.0.0:
+     resolution: {integrity: sha512-FCLHtRD/gnpCiCHEiJLOwdmFP+wzCmDEkc9y7NsYxeF4u7Btsn1ZuwgwJGxImImHicJArLP4R0yX4c2KCrMrTA==}
+     engines: {node: '>= 0.4'}
+@@ -1938,6 +2012,10 @@ packages:
+     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
+     engines: {node: '>=0.10.0'}
+ 
++  sql-escaper@1.5.1:
++    resolution: {integrity: sha512-4toX5E1fQbBrpfXidaHnF0669nkAdETeIPTs2SUjxxD7RRIs9ICG4gtpmfc68JCEKehsdwLFqBu9VlQqZ1P1gg==}
++    engines: {bun: '>=1.0.0', deno: '>=2.0.0', node: '>=12.0.0'}
++
+   stripe@18.1.0:
+     resolution: {integrity: sha512-MLDiniPTHqcfIT3anyBPmOEcaiDhYa7/jRaNypQ3Rt2SJnayQZBvVbFghIziUCZdltGAndm/ZxVOSw6uuSCDig==}
+     engines: {node: '>=12.*'}
+@@ -1985,8 +2063,8 @@ packages:
+   tw-animate-css@1.3.0:
+     resolution: {integrity: sha512-jrJ0XenzS9KVuDThJDvnhalbl4IYiMQ/XvpA0a2FL8KmlK+6CSMviO7ROY/I7z1NnUs5NnDhlM6fXmF40xPxzw==}
+ 
+-  typescript@5.8.3:
+-    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
++  typescript@6.0.3:
++    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+     engines: {node: '>=14.17'}
+     hasBin: true
+ 
+@@ -2024,11 +2102,6 @@ packages:
+     peerDependencies:
+       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+ 
+-  which@4.0.0:
+-    resolution: {integrity: sha512-GlaYyEb07DPxYCKhKzplCWBJtvxZcZMrL+4UkrTSJHHPyZU4mYYTv3qaOe77H7EODLSSopAUFAc6W8U4yqvscg==}
+-    engines: {node: ^16.13.0 || >=18.0.0}
+-    hasBin: true
+-
+   yallist@5.0.0:
+     resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
+     engines: {node: '>=18'}
+@@ -2364,9 +2437,6 @@ snapshots:
+   '@next/swc-win32-x64-msvc@15.6.0-canary.58':
+     optional: true
+ 
+-  '@petamoriken/float16@3.9.2':
+-    optional: true
+-
+   '@radix-ui/number@1.1.1': {}
+ 
+   '@radix-ui/primitive@1.1.2': {}
+@@ -3216,6 +3286,9 @@ snapshots:
+       postcss: 8.5.3
+       postcss-value-parser: 4.2.0
+ 
++  aws-ssl-profiles@1.1.2:
++    optional: true
++
+   bcryptjs@3.0.2: {}
+ 
+   browserslist@4.24.5:
+@@ -3275,10 +3348,11 @@ snapshots:
+     transitivePeerDependencies:
+       - supports-color
+ 
+-  drizzle-orm@0.43.1(gel@2.1.0)(postgres@3.4.5):
++  drizzle-orm@1.0.0-rc.5-ab785fc(mysql2@3.24.4(@types/node@22.15.18))(postgres@3.4.5)(zod@3.24.4):
+     optionalDependencies:
+-      gel: 2.1.0
++      mysql2: 3.24.4(@types/node@22.15.18)
+       postgres: 3.4.5
++      zod: 3.24.4
+ 
+   dunder-proto@1.0.1:
+     dependencies:
+@@ -3293,9 +3367,6 @@ snapshots:
+       graceful-fs: 4.2.11
+       tapable: 2.2.1
+ 
+-  env-paths@3.0.0:
+-    optional: true
+-
+   es-define-property@1.0.1: {}
+ 
+   es-errors@1.3.0: {}
+@@ -3370,16 +3441,9 @@ snapshots:
+ 
+   function-bind@1.1.2: {}
+ 
+-  gel@2.1.0:
++  generate-function@2.3.1:
+     dependencies:
+-      '@petamoriken/float16': 3.9.2
+-      debug: 4.4.1
+-      env-paths: 3.0.0
+-      semver: 7.7.3
+-      shell-quote: 1.8.2
+-      which: 4.0.0
+-    transitivePeerDependencies:
+-      - supports-color
++      is-property: 1.0.2
+     optional: true
+ 
+   get-intrinsic@1.3.0:
+@@ -3416,7 +3480,12 @@ snapshots:
+     dependencies:
+       function-bind: 1.1.2
+ 
+-  isexe@3.1.1:
++  iconv-lite@0.7.3:
++    dependencies:
++      safer-buffer: 2.1.2
++    optional: true
++
++  is-property@1.0.2:
+     optional: true
+ 
+   jiti@2.4.2: {}
+@@ -3468,6 +3537,12 @@ snapshots:
+       lightningcss-win32-arm64-msvc: 1.30.1
+       lightningcss-win32-x64-msvc: 1.30.1
+ 
++  long@5.3.2:
++    optional: true
++
++  lru.min@1.1.5:
++    optional: true
++
+   lucide-react@0.511.0(react@19.1.0):
+     dependencies:
+       react: 19.1.0
+@@ -3488,6 +3563,23 @@ snapshots:
+ 
+   ms@2.1.3: {}
+ 
++  mysql2@3.24.4(@types/node@22.15.18):
++    dependencies:
++      '@types/node': 22.15.18
++      aws-ssl-profiles: 1.1.2
++      generate-function: 2.3.1
++      iconv-lite: 0.7.3
++      long: 5.3.2
++      lru.min: 1.1.5
++      named-placeholders: 1.1.6
++      sql-escaper: 1.5.1
++    optional: true
++
++  named-placeholders@1.1.6:
++    dependencies:
++      lru.min: 1.1.5
++    optional: true
++
+   nanoid@3.3.11: {}
+ 
+   next@15.6.0-canary.59(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+@@ -3640,6 +3732,9 @@ snapshots:
+ 
+   resolve-pkg-maps@1.0.0: {}
+ 
++  safer-buffer@2.1.2:
++    optional: true
++
+   scheduler@0.26.0: {}
+ 
+   semver@7.7.3:
+@@ -3679,9 +3774,6 @@ snapshots:
+       '@img/sharp-win32-x64': 0.34.5
+     optional: true
+ 
+-  shell-quote@1.8.2:
+-    optional: true
+-
+   side-channel-list@1.0.0:
+     dependencies:
+       es-errors: 1.3.0
+@@ -3719,6 +3811,9 @@ snapshots:
+ 
+   source-map@0.6.1: {}
+ 
++  sql-escaper@1.5.1:
++    optional: true
++
+   stripe@18.1.0(@types/node@22.15.18):
+     dependencies:
+       qs: 6.14.0
+@@ -3755,7 +3850,7 @@ snapshots:
+ 
+   tw-animate-css@1.3.0: {}
+ 
+-  typescript@5.8.3: {}
++  typescript@6.0.3: {}
+ 
+   undici-types@6.21.0: {}
+ 
+@@ -3784,11 +3879,6 @@ snapshots:
+     dependencies:
+       react: 19.1.0
+ 
+-  which@4.0.0:
+-    dependencies:
+-      isexe: 3.1.1
+-    optional: true
+-
+   yallist@5.0.0: {}
+ 
+   zod@3.24.4: {}
+diff --git a/tsconfig.json b/tsconfig.json
+index f969d125d7f948c311648ab281763327ba890903..cebd5c4ed6041a20073d169033b5ed4ab1905fb9 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -7,7 +7,7 @@
+       "esnext"
+     ],
+     "allowJs": true,
+-    "skipLibCheck": true,
++    "skipLibCheck": false,
+     "strict": true,
+     "noEmit": true,
+     "esModuleInterop": true,
+@@ -15,9 +15,8 @@
+     "moduleResolution": "bundler",
+     "resolveJsonModule": true,
+     "isolatedModules": true,
+-    "jsx": "preserve",
++    "jsx": "react-jsx",
+     "incremental": true,
+-    "baseUrl": ".",
+     "plugins": [
+       {
+         "name": "next"

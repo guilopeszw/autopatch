@@ -1,0 +1,19 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Starter billing adapter",
+    "version": "listStripePrices"
+  },
+  "paths": {
+    "/billing/prices": {
+      "get": {
+        "operationId": "listStripePrices",
+        "responses": {
+          "200": {
+            "description": "Recurring price catalog"
+          }
+        }
+      }
+    }
+  }
+}
