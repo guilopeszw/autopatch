@@ -73,3 +73,12 @@ before and after. The generated SDK, adapter and models remain exact upstream
 copies in the repository; only a temporary target is patched. Provenance and
 limits are in `tests/fixtures/orval/README.md`. The API rename target is synthetic;
 the SDK itself is independently generated. No provider request occurs.
+
+## Real API release case
+
+The [Stripe case](../tests/fixtures/stripe/README.md) adds two CLI scenarios for
+published Acacia → Basil changes: a successful five-field subscription adapter
+migration with before/after behavioral observations, and a rejected consumer of
+a removed billing-period field. These are separate from the authored corpus and
+the generated Orval SDK scenario. The adapter and response examples are authored;
+the target contract changes are upstream, with pinned provenance.
