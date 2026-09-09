@@ -1,0 +1,1 @@
+{ "operations": {}, "schemas": { "subscription": { "file": "api.ts", "export": "Subscription" } } }

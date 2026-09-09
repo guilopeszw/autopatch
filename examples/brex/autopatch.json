@@ -1,0 +1,6 @@
+{
+  "from": "examples/brex/baseline.json",
+  "to": "examples/brex/target.json",
+  "project": "examples/brex/project/tsconfig.json",
+  "bindings": "examples/brex/project/bindings.json"
+}

@@ -1,0 +1,6 @@
+{
+  "from": "examples/stripe/baseline.json",
+  "to": "examples/stripe/target.json",
+  "project": "examples/stripe/project/tsconfig.json",
+  "bindings": "examples/stripe/project/bindings.json"
+}

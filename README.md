@@ -1,5 +1,10 @@
 # AutoPatch
 
+Reviewable examples now cover [Stripe, Brex, and Ramp](examples/README.md).
+Use [`--report`](docs/review-report.md) for the standalone review UI, or the
+[GitHub workflow](docs/schema-migration-workflow.md) to propose verified draft PRs
+when checked-in target schemas change. Provider coverage is bounded and documented.
+
 AutoPatch migrates explicitly bound TypeScript API contracts and consumers using
 **ts-morph symbol references and native TypeScript diagnostics**. Deterministic
 codemods handle supported mechanical changes. Optional LLM repair handles broken
