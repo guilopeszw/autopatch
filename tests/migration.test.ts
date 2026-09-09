@@ -65,3 +65,17 @@ test("repairs affected bound calls as a batch while keeping all other source out
   expect(requests).toHaveLength(2);
   expect(requests.join('')).not.toContain('not-model-context');
 });
+
+test('enforces strict suboptions when a nullable contract becomes non-nullable', async () => {
+  const { project, bindings, schema } = setup();
+  project.compilerOptions.set({ strictNullChecks: false });
+  project.getSourceFileOrThrow('/api.ts').replaceWithText('export interface Input { count: string | null }');
+  project.getSourceFileOrThrow('/consumer.ts').replaceWithText('import type { Input } from "./api.js"; const value: Input = { count: null };');
+  const before = schema('string');
+  Object.assign(before.components.schemas.Input.properties.count, { nullable: true });
+  const result = await migrateProject(project, before, schema('string'), bindings);
+  expect(result.status).toBe('blocked');
+  expect(result.diagnostics).toContainEqual(expect.objectContaining({ code: 2322 }));
+  expect(result.files).toEqual([]);
+  expect(project.getCompilerOptions().strictNullChecks).toBe(false);
+});

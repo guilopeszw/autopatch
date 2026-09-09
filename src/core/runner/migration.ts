@@ -3,7 +3,7 @@ import { applyCodemods, resolveOperation, type Bindings } from "../ast/codemod-b
 import { findCallSites } from "../ast/callsite-finder.js";
 import { repairCallSites, type RepairOptions, type RepairTransport } from "../agent/llm-fixer.js";
 import { diffOpenApi, type SchemaChange } from "../diff/openapi-differ.js";
-import { checkProject, type CompilerError } from "./type-checker.js";
+import { VALIDATION_COMPILER_OPTIONS, checkProject, type CompilerError } from "./type-checker.js";
 
 /** A verified edit includes its preimage so the writer can detect stale plans. */
 export interface FilePatch { path: string; before: string; after: string }
@@ -33,7 +33,7 @@ export async function migrateProject(
   const originals = new Map(project.getSourceFiles().map((source) => [source, source.getFullText()]));
   const result: MigrationResult = { status: "blocked", llmAttempts: 0, changes: [], files: [], diagnostics: [], issues: [] };
   try {
-    project.compilerOptions.set({ strict: true, noEmit: true, noCheck: false, skipLibCheck: false });
+    project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
     const baseline = checkProject(project);
     if (!baseline.success) {
       result.diagnostics = baseline.errors;

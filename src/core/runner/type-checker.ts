@@ -1,5 +1,23 @@
 import { ts, type Project } from "ts-morph";
 
+/** Explicit false suboptions override `strict`; the gate must set each one. */
+export const VALIDATION_COMPILER_OPTIONS: Readonly<ts.CompilerOptions> = {
+  strict: true,
+  noImplicitAny: true,
+  noImplicitThis: true,
+  strictNullChecks: true,
+  strictFunctionTypes: true,
+  strictBindCallApply: true,
+  strictPropertyInitialization: true,
+  strictBuiltinIteratorReturn: true,
+  useUnknownInCatchVariables: true,
+  alwaysStrict: true,
+  noEmit: true,
+  noCheck: false,
+  skipLibCheck: false,
+  skipDefaultLibCheck: false,
+};
+
 /** Serializable compiler error. Offsets address the current, unsaved source text. */
 export interface CompilerError {
   code: number;
@@ -21,22 +39,29 @@ export interface TypeCheckResult {
  * Diagnostics come from the same native compiler instance that owns the AST.
  */
 export function checkProject(project: Project): TypeCheckResult {
-  const errors = project.getPreEmitDiagnostics()
-    .filter((diagnostic) => diagnostic.getCategory() === ts.DiagnosticCategory.Error)
-    .map((diagnostic): CompilerError => {
-      const result: CompilerError = {
-        code: diagnostic.getCode(),
-        message: ts.flattenDiagnosticMessageText(diagnostic.compilerObject.messageText, "\n"),
-      };
-      const file = diagnostic.getSourceFile();
-      const line = diagnostic.getLineNumber();
-      const start = diagnostic.getStart();
-      const length = diagnostic.getLength();
-      if (file) result.file = file.getFilePath();
-      if (line !== undefined) result.line = line;
-      if (start !== undefined) result.start = start;
-      if (length !== undefined) result.length = length;
-      return result;
-    });
-  return { success: errors.length === 0, errors };
+  const originalOptions = project.getCompilerOptions();
+  project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
+  try {
+    const errors = project.getPreEmitDiagnostics()
+      .filter((diagnostic) => diagnostic.getCategory() === ts.DiagnosticCategory.Error)
+      .map((diagnostic): CompilerError => {
+        const result: CompilerError = {
+          code: diagnostic.getCode(),
+          message: ts.flattenDiagnosticMessageText(diagnostic.compilerObject.messageText, "\n"),
+        };
+        const file = diagnostic.getSourceFile();
+        const line = diagnostic.getLineNumber();
+        const start = diagnostic.getStart();
+        const length = diagnostic.getLength();
+        if (file) result.file = file.getFilePath();
+        if (line !== undefined) result.line = line;
+        if (start !== undefined) result.start = start;
+        if (length !== undefined) result.length = length;
+        return result;
+      });
+    return { success: errors.length === 0, errors };
+  } finally {
+    project.compilerOptions.reset();
+    project.compilerOptions.set(originalOptions);
+  }
 }

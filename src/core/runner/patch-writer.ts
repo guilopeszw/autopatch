@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import type { Project } from "ts-morph";
 import type { MigrationResult } from "./migration.js";
-import { checkProject } from "./type-checker.js";
+import { VALIDATION_COMPILER_OPTIONS, checkProject } from "./type-checker.js";
 
 /**
  * Persist only a fresh, compiler-valid plan. Files must already exist inside the
@@ -40,7 +40,7 @@ export function writeVerifiedPatch(project: Project, result: MigrationResult, ro
       if (source.getFullText() !== patch.before || fs.readFileSync(path, "utf8") !== patch.before) throw new Error(`Stale patch: ${path}`);
       source.replaceWithText(patch.after);
     }
-    project.compilerOptions.set({ strict: true, noEmit: true, noCheck: false, skipLibCheck: false });
+    project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
     const validation = checkProject(project);
     if (!validation.success) throw new Error(`Patch failed compiler validation: ${validation.errors.map((error) => `TS${error.code}`).join(", ")}`);
     // Detect edits to other loaded sources made while the migration was planning.

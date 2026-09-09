@@ -75,3 +75,12 @@ test('reports cleanup trouble as a warning after successful writes and still rel
   expect(readFileSync(file, 'utf8')).toBe('export const count: number = 2;');
   expect(readdirSync(root)).not.toContain('.autopatch.lock');
 });
+
+test('enforces strict null checking again at the persistence boundary', () => {
+  const { root, file, before, project, result } = setup();
+  project.compilerOptions.set({ strictNullChecks: false });
+  result.files[0]!.after = 'export const count: number = null;';
+  expect(() => writeVerifiedPatch(project, result, root)).toThrow(/compiler validation/i);
+  expect(readFileSync(file, 'utf8')).toBe(before);
+  expect(project.getCompilerOptions().strictNullChecks).toBe(false);
+});
