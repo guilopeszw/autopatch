@@ -40,7 +40,11 @@ export interface TypeCheckResult {
  */
 export function checkProject(project: Project): TypeCheckResult {
   const originalOptions = project.getCompilerOptions();
-  project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
+  const policyChanged = (Object.keys(VALIDATION_COMPILER_OPTIONS) as (keyof ts.CompilerOptions)[])
+    .some((key) => originalOptions[key] !== VALIDATION_COMPILER_OPTIONS[key]);
+  // Avoid invalidating the compiler program when the runner already holds the
+  // strict policy. Rebuilding it at every gate multiplied CI compile time.
+  if (policyChanged) project.compilerOptions.set(VALIDATION_COMPILER_OPTIONS);
   try {
     const errors = project.getPreEmitDiagnostics()
       .filter((diagnostic) => diagnostic.getCategory() === ts.DiagnosticCategory.Error)
@@ -61,7 +65,9 @@ export function checkProject(project: Project): TypeCheckResult {
       });
     return { success: errors.length === 0, errors };
   } finally {
-    project.compilerOptions.reset();
-    project.compilerOptions.set(originalOptions);
+    if (policyChanged) {
+      project.compilerOptions.reset();
+      project.compilerOptions.set(originalOptions);
+    }
   }
 }
