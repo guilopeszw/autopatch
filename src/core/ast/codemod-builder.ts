@@ -70,7 +70,7 @@ export function applyCodemods(project: Project, changes: readonly SchemaChange[]
       } else {
         const type = schemaType(change.after.schema);
         if (change.after.required && binding.defaults && Object.hasOwn(binding.defaults, change.property)) {
-          insertConfiguredDefault(declaration, change.property, binding.defaults[change.property], type);
+          insertConfiguredDefault(declaration, change.property, binding.defaults[change.property], change.after.schema);
         }
         if (property) {
           property.setType(type);
@@ -120,11 +120,18 @@ function schemaType(schema: Record<string, unknown>): string {
 }
 
 /** Insert only into directly context-typed object literals, preserving existing fields. */
-function insertConfiguredDefault(declaration: InterfaceDeclaration, name: string, value: unknown, type: string): void {
+function insertConfiguredDefault(declaration: InterfaceDeclaration, name: string, value: unknown, schema: Record<string, unknown>): void {
   if (value !== null && typeof value !== "string" && typeof value !== "boolean" &&
       !(typeof value === "number" && Number.isFinite(value))) {
     throw new Error(`Configured default for ${name} must be a finite JSON scalar`);
   }
+  const types = Array.isArray(schema.type) ? schema.type : [schema.type];
+  // TypeScript lowers OpenAPI integer to number, so validate this known literal
+  // before lowering. A union explicitly allowing number still accepts fractions.
+  if (typeof value === "number" && types.includes("integer") && !types.includes("number") && !Number.isInteger(value)) {
+    throw new Error(`Configured default for ${name} must be an integer`);
+  }
+  const type = schemaType(schema);
   const literal = JSON.stringify(value);
   const validation = new Project({ useInMemoryFileSystem: true, compilerOptions: { strict: true } });
   validation.createSourceFile("/default.ts", `const value: ${type} = ${literal};`);

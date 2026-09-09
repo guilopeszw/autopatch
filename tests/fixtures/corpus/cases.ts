@@ -130,3 +130,16 @@ corpus.push({
   bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { region: 'eu' } } } },
   expected: { status: 'blocked', reason: 'Cannot infer missing region through a computed property' },
 });
+
+corpus.push({
+  id: 'fractional-integer-default',
+  description: 'Reject fractional configured values for integer fields despite TypeScript number compatibility.',
+  before: objectDoc({ id: { type: 'string' } }),
+  after: objectDoc({ id: { type: 'string' }, count: { type: 'integer' } }, ['id', 'count']),
+  files: {
+    '/sdk.ts': 'export interface Input { id: string } export function submit(input: Input) { return input.id; }',
+    '/consumer.ts': 'import { submit } from "./sdk.js"; export const result = submit({ id: "1" });',
+  },
+  bindings: { operations: bindings.operations, schemas: { Input: { file: '/sdk.ts', export: 'Input', defaults: { count: 1.5 } } } },
+  expected: { status: 'blocked', reason: 'Configured default for count must be an integer' },
+});
